@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Sidra DEX - 1% Fee</title>
+  <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; background: #0f0f23; color: #fff; text-align: center; padding: 20px; }
+    .container { max-width: 500px; margin: 40px auto; background: #1a1a2e; padding: 30px; border-radius: 20px; box-shadow: 0 0 20px rgba(0,255,100,0.2); }
+    input, button, select { padding: 12px; margin: 10px; width: 100%; border-radius: 10px; border: none; font-size: 16px; }
+    button { background: #00ff88; color: #000; font-weight: bold; cursor: pointer; }
+    button:hover { background: #00cc66; }
+    .fee { color: #00ff88; font-size: 14px; margin: 15px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 My Sidra DEX</h1>
+    <p style="color:#00ff88">1% Frontend Fee → Goes to <span style="word-break:break-all">0x7f4eb974D546a8597E76BE713716E269a52Ae76e</span></p>
+    
+    <button onclick="addNetwork()">1. Add Sidra Chain to MetaMask</button>
+    <button onclick="connectWallet()">2. Connect Wallet</button>
+    
+    <div class="fee">Your Router: 0xEef37Da680Ad7132f861F5DC11aaD638292D301B</div>
+    
+    <select id="fromToken" style="background:#16213e;color:white">
+      <option value="0xE4095a910209D7BE03B55D02F40d4554B1666182">SDA (Native - use ETH button)</option>
+      <option value="">Custom Token Address...</option>
+    </select>
+    <input type="text" id="amountIn" placeholder="Amount to swap" value="1">
+    
+    <select id="toToken" style="background:#16213e;color:white">
+      <option value="">Paste To Token Address</option>
+    </select>
+    
+    <button onclick="swapExactTokens()">Swap Tokens</button>
+    <button onclick="swapExactETH()">Swap SDA → Token</button>
+    <button onclick="swapTokensForETH()">Swap Token → SDA</button>
+    
+    <p id="status" style="margin-top:20px; color:#00ff88"></p>
+  </div>
+
+  <script>
+    const ROUTER = "0xEef37Da680Ad7132f861F5DC11aaD638292D301B";
+    const WSDA = "0xE4095a910209D7BE03B55D02F40d4554B1666182";
+    const CHAIN_ID = 97453;
+    let provider, signer, address;
+
+    const routerABI = [
+      "function swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline) external returns (uint[] memory)",
+      "function swapExactETHForTokens(uint256 amountOutMin, address[] path, address to, uint256 deadline) external payable returns (uint[] memory)",
+      "function swapExactTokensForETH(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline) external returns (uint[] memory)"
+    ];
+
+    async function addNetwork() {
+      if (!window.ethereum) return alert("Install MetaMask!");
+      try {
+        await window.ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [{
+            chainId: '0x17C7D', // 97453 in hex
+            chainName: 'Sidra Chain',
+            nativeCurrency: { name: 'SDA', symbol: 'SDA', decimals: 18 },
+            rpcUrls: ['https://node.sidrachain.com'],
+            blockExplorerUrls: ['https://ledger.sidrachain.com']
+          }]
+        });
+        alert("Sidra Chain added! Switch to it in MetaMask.");
+      } catch(e) { alert(e.message); }
+    }
+
+    async function connectWallet() {
+      if (!window.ethereum) return alert("MetaMask not found!");
+      provider = new ethers.providers.Web3Provider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      signer = provider.getSigner();
+      address = await signer.getAddress();
+      document.getElementById("status").innerHTML = `Connected: ${address.slice(0,6)}...${address.slice(-4)}`;
+    }
+
+    async function swapExactTokens() {
+      if (!signer) return alert("Connect wallet first!");
+      const amountIn = document.getElementById("amountIn").value;
+      const fromToken = document.getElementById("fromToken").value || prompt("Enter FROM token address");
+      const toToken = document.getElementById("toToken").value || prompt("Enter TO token address");
+      
+      const tokenIn = new ethers.Contract(fromToken, ["function approve(address,uint256)"], signer);
+      const router = new ethers.Contract(ROUTER, routerABI, signer);
+      
+      const amount = ethers.utils.parseUnits(amountIn, 18);
+      await tokenIn.approve(ROUTER, amount);
+      
+      const path = [fromToken, toToken];
+      const tx = await router.swapExactTokensForTokens(
+        amount,
+        0, // min out (set slippage in real app)
+        path,
+        address,
+        Math.floor(Date.now()/1000) + 300
+      );
+      await tx.wait();
+      alert("Swap done! 1% fee collected automatically ✅");
+    }
+
+    async function swapExactETH() {
+      if (!signer) return alert("Connect wallet first!");
+      const amountIn = document.getElementById("amountIn").value;
+      const toToken = document.getElementById("toToken").value || prompt("Enter TO token address");
+      
+      const router = new ethers.Contract(ROUTER, routerABI, signer);
+      const amount = ethers.utils.parseEther(amountIn);
+      
+      const path = [WSDA, toToken];
+      const tx = await router.swapExactETHForTokens(
+        0,
+        path,
+        address,
+        Math.floor(Date.now()/1000) + 300,
+        { value: amount }
+      );
+      await tx.wait();
+      alert("SDA → Token swap done! 1% fee collected ✅");
+    }
+
+    async function swapTokensForETH() {
+      if (!signer) return alert("Connect wallet first!");
+      const amountIn = document.getElementById("amountIn").value;
+      const fromToken = document.getElementById("fromToken").value || prompt("Enter FROM token address");
+      
+      const tokenIn = new ethers.Contract(fromToken, ["function approve(address,uint256)"], signer);
+      const router = new ethers.Contract(ROUTER, routerABI, signer);
+      
+      const amount = ethers.utils.parseUnits(amountIn, 18);
+      await tokenIn.approve(ROUTER, amount);
+      
+      const path = [fromToken, WSDA];
+      const tx = await router.swapExactTokensForETH(
+        amount,
+        0,
+        path,
+        address,
+        Math.floor(Date.now()/1000) + 300
+      );
+      await tx.wait();
+      alert("Token → SDA swap done! 1% fee collected ✅");
+    }
+  </script>
+</body>
+</html>
