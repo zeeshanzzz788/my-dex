@@ -1,150 +1,327 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Sidra DEX - 1% Fee</title>
-  <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"></script>
+  <title>My Sidra DEX</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.min.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; background: #0f0f23; color: #fff; text-align: center; padding: 20px; }
-    .container { max-width: 500px; margin: 40px auto; background: #1a1a2e; padding: 30px; border-radius: 20px; box-shadow: 0 0 20px rgba(0,255,100,0.2); }
-    input, button, select { padding: 12px; margin: 10px; width: 100%; border-radius: 10px; border: none; font-size: 16px; }
-    button { background: #00ff88; color: #000; font-weight: bold; cursor: pointer; }
-    button:hover { background: #00cc66; }
-    .fee { color: #00ff88; font-size: 14px; margin: 15px 0; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(12px); }
   </style>
 </head>
-<body>
-  <div class="container">
-    <h1>🚀 My Sidra DEX</h1>
-    <p style="color:#00ff88">1% Frontend Fee → Goes to <span style="word-break:break-all">0x7f4eb974D546a8597E76BE713716E269a52Ae76e</span></p>
-    
-    <button onclick="addNetwork()">1. Add Sidra Chain to MetaMask</button>
-    <button onclick="connectWallet()">2. Connect Wallet</button>
-    
-    <div class="fee">Your Router: 0xEef37Da680Ad7132f861F5DC11aaD638292D301B</div>
-    
-    <select id="fromToken" style="background:#16213e;color:white">
-      <option value="0xE4095a910209D7BE03B55D02F40d4554B1666182">SDA (Native - use ETH button)</option>
-      <option value="">Custom Token Address...</option>
-    </select>
-    <input type="text" id="amountIn" placeholder="Amount to swap" value="1">
-    
-    <select id="toToken" style="background:#16213e;color:white">
-      <option value="">Paste To Token Address</option>
-    </select>
-    
-    <button onclick="swapExactTokens()">Swap Tokens</button>
-    <button onclick="swapExactETH()">Swap SDA → Token</button>
-    <button onclick="swapTokensForETH()">Swap Token → SDA</button>
-    
-    <p id="status" style="margin-top:20px; color:#00ff88"></p>
+<body class="bg-zinc-950 text-white min-h-screen">
+
+  <!-- NAVBAR -->
+  <nav class="border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-md fixed w-full z-50">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-2xl flex items-center justify-center text-2xl font-bold">💱</div>
+        <h1 class="text-3xl font-bold tracking-tighter">My Sidra DEX</h1>
+      </div>
+      <button id="connectBtn" 
+              class="px-6 py-3 bg-white text-black font-semibold rounded-2xl hover:bg-zinc-200 transition flex items-center gap-2">
+        <span id="connectText">Connect Wallet</span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="max-w-2xl mx-auto pt-28 pb-12 px-6">
+    <!-- SWAP CARD -->
+    <div class="glass border border-zinc-700 rounded-3xl p-8 shadow-2xl">
+      
+      <!-- FROM -->
+      <div class="mb-6">
+        <div class="flex justify-between text-sm mb-2 text-zinc-400">
+          <span>From</span>
+          <span id="fromBalance" class="cursor-pointer hover:text-white">Balance: 0 SDA</span>
+        </div>
+        <div class="flex gap-4 bg-zinc-900 rounded-2xl p-4">
+          <button id="fromTokenBtn" 
+                  class="flex items-center gap-3 bg-zinc-800 hover:bg-zinc-700 transition px-6 py-3 rounded-2xl font-medium">
+            <img id="fromLogo" src="https://placehold.co/32x32/00ffaa/000000?text=SDA" class="w-8 h-8 rounded-full">
+            <span id="fromSymbol">SDA</span>
+            <span class="text-xs">▼</span>
+          </button>
+          <input id="fromAmount" type="text" placeholder="0.00" 
+                 class="flex-1 bg-transparent text-4xl font-medium outline-none text-right">
+        </div>
+      </div>
+
+      <!-- SWAP ARROW -->
+      <div class="flex justify-center -my-4 relative z-10">
+        <button id="swapTokensBtn" 
+                class="bg-zinc-900 border border-zinc-700 hover:border-cyan-400 w-11 h-11 rounded-2xl flex items-center justify-center transition text-2xl">
+          ⇄
+        </button>
+      </div>
+
+      <!-- TO -->
+      <div class="mt-6">
+        <div class="flex justify-between text-sm mb-2 text-zinc-400">
+          <span>To</span>
+          <span id="toBalance" class="cursor-pointer hover:text-white">Balance: 0</span>
+        </div>
+        <div class="flex gap-4 bg-zinc-900 rounded-2xl p-4">
+          <button id="toTokenBtn" 
+                  class="flex items-center gap-3 bg-zinc-800 hover:bg-zinc-700 transition px-6 py-3 rounded-2xl font-medium">
+            <img id="toLogo" src="https://placehold.co/32x32" class="w-8 h-8 rounded-full">
+            <span id="toSymbol">Select Token</span>
+            <span class="text-xs">▼</span>
+          </button>
+          <input id="toAmount" type="text" placeholder="0.00" readonly
+                 class="flex-1 bg-transparent text-4xl font-medium outline-none text-right text-emerald-400">
+        </div>
+      </div>
+
+      <!-- LIVE PRICE & ESTIMATE -->
+      <div id="priceInfo" class="mt-6 text-sm text-zinc-400 flex justify-between items-center bg-zinc-900/50 rounded-2xl px-6 py-3">
+        <span>1 <span id="priceFromSymbol">SDA</span> = <span id="livePrice">0.00</span> <span id="priceToSymbol"></span></span>
+        <span id="estimateText" class="text-emerald-400 font-medium"></span>
+      </div>
+
+      <!-- SLIPPAGE -->
+      <div class="mt-6 flex items-center justify-between text-sm">
+        <span class="text-zinc-400">Slippage Tolerance</span>
+        <div class="flex gap-2">
+          <button onclick="setSlippage(0.5)" class="px-4 py-1 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-xs">0.5%</button>
+          <button onclick="setSlippage(1)" class="px-4 py-1 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-xs">1%</button>
+          <button onclick="setSlippage(2)" class="px-4 py-1 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-xs">2%</button>
+          <input id="customSlippage" type="number" value="1" class="w-16 bg-zinc-800 text-center rounded-xl text-xs">
+          <span class="text-xs text-zinc-400 self-center">%</span>
+        </div>
+      </div>
+
+      <!-- SWAP BUTTON -->
+      <button id="swapBtn" 
+              class="mt-8 w-full py-5 bg-gradient-to-r from-cyan-500 to-purple-600 font-semibold text-xl rounded-2xl hover:brightness-110 transition disabled:opacity-50 flex items-center justify-center gap-3">
+        <span id="swapBtnText">Connect Wallet</span>
+      </button>
+    </div>
+
+    <!-- TOKEN MODAL -->
+    <div id="tokenModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+      <div class="bg-zinc-900 rounded-3xl w-full max-w-md mx-4 overflow-hidden">
+        <div class="p-6 border-b border-zinc-800 flex justify-between">
+          <h3 class="text-xl font-semibold">Select Token</h3>
+          <button onclick="closeModal()" class="text-3xl leading-none">×</button>
+        </div>
+        <input id="searchInput" type="text" placeholder="Search token..." 
+               class="w-full bg-zinc-950 px-6 py-4 outline-none text-lg">
+        <div id="tokenList" class="max-h-96 overflow-y-auto p-2"></div>
+      </div>
+    </div>
   </div>
 
   <script>
-    const ROUTER = "0xEef37Da680Ad7132f861F5DC11aaD638292D301B";
-    const WSDA = "0xE4095a910209D7BE03B55D02F40d4554B1666182";
-    const CHAIN_ID = 97453;
-    let provider, signer, address;
+    // ==================== CONFIGURE HERE ONLY ====================
+    const ROUTER_ADDRESS = "0x35cAC72Db00e8dAC0e4f7F8A0F53D339E0cC23fb"; // ← Official Sidra DEX Router
 
-    const routerABI = [
-      "function swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline) external returns (uint[] memory)",
-      "function swapExactETHForTokens(uint256 amountOutMin, address[] path, address to, uint256 deadline) external payable returns (uint[] memory)",
-      "function swapExactTokensForETH(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline) external returns (uint[] memory)"
+    // Wrapped SDA (required for native routing)
+    const WSDA_ADDRESS = "0xE4095a910209D7BE03B55D02F40d4554B1666182";
+
+    const tokens = [
+      // Native SDA - shown everywhere
+      { address: null, symbol: "SDA", name: "Sidra Digital Assets", decimals: 18, logo: "https://placehold.co/64x64/00ffaa/000000?text=SDA", isNative: true },
+      
+      // Official Sidra DEX Tokens (all actively traded pairs)
+      { address: "0xE4095a910209D7BE03B55D02F40d4554B1666182", symbol: "WSDA", name: "Wrapped SDA", decimals: 18, logo: "https://placehold.co/64x64/00ff00/000000?text=WSDA", isNative: false },
+      { address: "0x345b20d4fca08376f19145c36c531a1821af96c4", symbol: "VPD", name: "VPD Token", decimals: 18, logo: "https://placehold.co/64x64/ffaa00/000000?text=VPD", isNative: false },
+      { address: "0xf74106911432657a24b0d85257d40f24f801cc01", symbol: "MBF", name: "EBMOF", decimals: 18, logo: "https://placehold.co/64x64/aa00ff/000000?text=MBF", isNative: false },
+      { address: "0xb6f440a059d24ca305bce6f25115d09e9dbea653", symbol: "ECSDA", name: "ECOSIDRA", decimals: 18, logo: "https://placehold.co/64x64/00aaff/000000?text=ECSDA", isNative: false },
+      { address: "0x9b61324f0bee10f4624fe6e75c60943b73125e81", symbol: "ARMS", name: "Sidra Aram Travel", decimals: 18, logo: "https://placehold.co/64x64/aaff00/000000?text=ARMS", isNative: false },
+      { address: "0x88a53e067a6d2be71248d7b660ae72cc47f82d88", symbol: "NGEC", name: "NEWGEN GLOBAL MARKETING", decimals: 18, logo: "https://placehold.co/64x64/ff00aa/000000?text=NGEC", isNative: false }
+      
+      // Add more tokens here exactly like above (get address from https://ledger.sidrachain.com)
     ];
 
-    async function addNetwork() {
-      if (!window.ethereum) return alert("Install MetaMask!");
-      try {
-        await window.ethereum.request({
-          method: 'wallet_addEthereumChain',
-          params: [{
-            chainId: '0x17C7D', // 97453 in hex
-            chainName: 'Sidra Chain',
-            nativeCurrency: { name: 'SDA', symbol: 'SDA', decimals: 18 },
-            rpcUrls: ['https://node.sidrachain.com'],
-            blockExplorerUrls: ['https://ledger.sidrachain.com']
-          }]
-        });
-        alert("Sidra Chain added! Switch to it in MetaMask.");
-      } catch(e) { alert(e.message); }
+    // Router ABI (full native SDA support)
+    const ROUTER_ABI = [
+      "function getAmountsOut(uint amountIn, address[] path) view returns (uint[] memory)",
+      "function swapExactTokensForTokens(uint amountIn, uint amountOutMin, address[] path, address to, uint deadline) returns (uint[] memory)",
+      "function swapExactETHForTokens(uint amountOutMin, address[] path, address to, uint deadline) payable returns (uint[] memory)",
+      "function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] path, address to, uint deadline) returns (uint[] memory)"
+    ];
+
+    const ERC20_ABI = [
+      "function balanceOf(address) view returns (uint256)",
+      "function allowance(address owner, address spender) view returns (uint256)",
+      "function approve(address spender, uint256 amount) returns (bool)"
+    ];
+
+    // Chain config
+    const CHAIN_ID = 97453;
+    const RPC_URL = "https://node.sidrachain.com";
+    const EXPLORER = "https://ledger.sidrachain.com";
+
+    let provider, signer, routerContract;
+    let fromToken = null, toToken = null;
+    let currentSlippage = 1;
+
+    tailwind.config = { content: ["*"], theme: { extend: {} } };
+
+    // ==================== HELPERS ====================
+    function isNative(token) { return token && token.isNative === true; }
+    function getPath(fromT, toT) {
+      if (isNative(fromT)) return [WSDA_ADDRESS, toT.address];
+      if (isNative(toT)) return [fromT.address, WSDA_ADDRESS];
+      return [fromT.address, toT.address];
     }
 
+    async function getTokenBalance(token, owner) {
+      if (isNative(token)) return await provider.getBalance(owner);
+      const contract = new ethers.Contract(token.address, ERC20_ABI, provider);
+      return await contract.balanceOf(owner);
+    }
+
+    // ==================== WALLET + DEFAULTS ====================
     async function connectWallet() {
-      if (!window.ethereum) return alert("MetaMask not found!");
-      provider = new ethers.providers.Web3Provider(window.ethereum);
-      await provider.send("eth_requestAccounts", []);
-      signer = provider.getSigner();
-      address = await signer.getAddress();
-      document.getElementById("status").innerHTML = `Connected: ${address.slice(0,6)}...${address.slice(-4)}`;
+      if (!window.ethereum) return alert("Please install MetaMask!");
+      provider = new ethers.BrowserProvider(window.ethereum);
+      signer = await provider.getSigner();
+      
+      const network = await provider.getNetwork();
+      if (Number(network.chainId) !== CHAIN_ID) {
+        try { await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{ chainId: '0x' + CHAIN_ID.toString(16), chainName: 'Sidra Chain', nativeCurrency: { name: 'SDA', symbol: 'SDA', decimals: 18 }, rpcUrls: [RPC_URL], blockExplorerUrls: [EXPLORER] }] }); }
+        catch (e) { alert("Please switch to Sidra Chain in MetaMask"); return; }
+      }
+
+      routerContract = new ethers.Contract(ROUTER_ADDRESS, ROUTER_ABI, signer);
+      document.getElementById("connectText").innerHTML = `✅ \( {signer.address.slice(0,6)}... \){signer.address.slice(-4)}`;
+      document.getElementById("swapBtnText").innerHTML = "Swap";
+      initDefaultTokens();
+      loadBalances();
     }
 
-    async function swapExactTokens() {
-      if (!signer) return alert("Connect wallet first!");
-      const amountIn = document.getElementById("amountIn").value;
-      const fromToken = document.getElementById("fromToken").value || prompt("Enter FROM token address");
-      const toToken = document.getElementById("toToken").value || prompt("Enter TO token address");
-      
-      const tokenIn = new ethers.Contract(fromToken, ["function approve(address,uint256)"], signer);
-      const router = new ethers.Contract(ROUTER, routerABI, signer);
-      
-      const amount = ethers.utils.parseUnits(amountIn, 18);
-      await tokenIn.approve(ROUTER, amount);
-      
-      const path = [fromToken, toToken];
-      const tx = await router.swapExactTokensForTokens(
-        amount,
-        0, // min out (set slippage in real app)
-        path,
-        address,
-        Math.floor(Date.now()/1000) + 300
-      );
-      await tx.wait();
-      alert("Swap done! 1% fee collected automatically ✅");
+    function initDefaultTokens() {
+      fromToken = tokens[0]; // SDA
+      document.getElementById("fromSymbol").textContent = "SDA";
+      document.getElementById("fromLogo").src = tokens[0].logo;
     }
 
-    async function swapExactETH() {
-      if (!signer) return alert("Connect wallet first!");
-      const amountIn = document.getElementById("amountIn").value;
-      const toToken = document.getElementById("toToken").value || prompt("Enter TO token address");
-      
-      const router = new ethers.Contract(ROUTER, routerABI, signer);
-      const amount = ethers.utils.parseEther(amountIn);
-      
-      const path = [WSDA, toToken];
-      const tx = await router.swapExactETHForTokens(
-        0,
-        path,
-        address,
-        Math.floor(Date.now()/1000) + 300,
-        { value: amount }
-      );
-      await tx.wait();
-      alert("SDA → Token swap done! 1% fee collected ✅");
+    // ==================== TOKEN MODAL & LIST ====================
+    function showTokenModal(isFrom) {
+      const modal = document.getElementById("tokenModal");
+      modal.classList.remove("hidden");
+      renderTokenList(isFrom);
+      window.currentModalTarget = isFrom;
     }
 
-    async function swapTokensForETH() {
-      if (!signer) return alert("Connect wallet first!");
-      const amountIn = document.getElementById("amountIn").value;
-      const fromToken = document.getElementById("fromToken").value || prompt("Enter FROM token address");
-      
-      const tokenIn = new ethers.Contract(fromToken, ["function approve(address,uint256)"], signer);
-      const router = new ethers.Contract(ROUTER, routerABI, signer);
-      
-      const amount = ethers.utils.parseUnits(amountIn, 18);
-      await tokenIn.approve(ROUTER, amount);
-      
-      const path = [fromToken, WSDA];
-      const tx = await router.swapExactTokensForETH(
-        amount,
-        0,
-        path,
-        address,
-        Math.floor(Date.now()/1000) + 300
-      );
-      await tx.wait();
-      alert("Token → SDA swap done! 1% fee collected ✅");
+    function closeModal() { document.getElementById("tokenModal").classList.add("hidden"); }
+
+    function renderTokenList(isFrom) {
+      const list = document.getElementById("tokenList");
+      list.innerHTML = "";
+      const search = document.getElementById("searchInput").value.toUpperCase();
+
+      tokens.filter(t => t.symbol.toUpperCase().includes(search) || t.name.toUpperCase().includes(search))
+           .forEach(token => {
+             const div = document.createElement("div");
+             div.className = "flex items-center gap-4 px-6 py-4 hover:bg-zinc-800 rounded-2xl cursor-pointer";
+             div.innerHTML = `<img src="\( {token.logo}" class="w-10 h-10 rounded-full"><div><div class="font-semibold"> \){token.symbol}</div><div class="text-xs text-zinc-400">${token.name}</div></div>`;
+             div.onclick = () => {
+               if (window.currentModalTarget) {
+                 fromToken = token; document.getElementById("fromSymbol").textContent = token.symbol; document.getElementById("fromLogo").src = token.logo;
+               } else {
+                 toToken = token; document.getElementById("toSymbol").textContent = token.symbol; document.getElementById("toLogo").src = token.logo;
+               }
+               closeModal();
+               if (fromToken && toToken && fromToken.symbol !== toToken.symbol) getLiveQuote();
+             };
+             list.appendChild(div);
+           });
     }
+
+    // ==================== LIVE PRICE + ESTIMATE ====================
+    async function getLiveQuote() {
+      if (!fromToken || !toToken || !signer || fromToken.symbol === toToken.symbol) return;
+      const amountStr = document.getElementById("fromAmount").value || "0";
+      if (parseFloat(amountStr) <= 0) return;
+
+      const amountIn = ethers.parseUnits(amountStr, fromToken.decimals);
+      const path = getPath(fromToken, toToken);
+
+      try {
+        const amountsOut = await routerContract.getAmountsOut(amountIn, path);
+        const estimatedOut = ethers.formatUnits(amountsOut[1], toToken.decimals);
+        document.getElementById("toAmount").value = parseFloat(estimatedOut).toFixed(6);
+        const price = (parseFloat(estimatedOut) / parseFloat(amountStr)).toFixed(6);
+        document.getElementById("livePrice").textContent = price;
+        document.getElementById("priceFromSymbol").textContent = fromToken.symbol;
+        document.getElementById("priceToSymbol").textContent = toToken.symbol;
+        document.getElementById("estimateText").innerHTML = `≈ ${estimatedOut} ${toToken.symbol}`;
+      } catch (e) { document.getElementById("estimateText").textContent = "No liquidity"; }
+    }
+
+    let timeout;
+    document.getElementById("fromAmount").addEventListener("input", () => { clearTimeout(timeout); timeout = setTimeout(getLiveQuote, 300); });
+
+    // ==================== BALANCES ====================
+    async function loadBalances() {
+      if (!signer || !fromToken || !toToken) return;
+      const address = await signer.getAddress();
+      const balFrom = await getTokenBalance(fromToken, address);
+      const balTo = await getTokenBalance(toToken, address);
+      document.getElementById("fromBalance").textContent = `Balance: ${ethers.formatUnits(balFrom, fromToken.decimals).slice(0,10)} ${fromToken.symbol}`;
+      document.getElementById("toBalance").textContent = `Balance: ${ethers.formatUnits(balTo, toToken.decimals).slice(0,10)} ${toToken.symbol}`;
+    }
+
+    // ==================== SWAP (Native SDA Fully Supported) ====================
+    async function executeSwap() {
+      if (!fromToken || !toToken || fromToken.symbol === toToken.symbol) return alert("Select two different tokens");
+      const amountStr = document.getElementById("fromAmount").value;
+      if (!amountStr || parseFloat(amountStr) <= 0) return alert("Enter amount");
+
+      const amountIn = ethers.parseUnits(amountStr, fromToken.decimals);
+      const amountOutMin = ethers.parseUnits((parseFloat(document.getElementById("toAmount").value) * (1 - currentSlippage/100)).toFixed(6), toToken.decimals);
+      const path = getPath(fromToken, toToken);
+      const deadline = Math.floor(Date.now() / 1000) + 600;
+      const toAddress = await signer.getAddress();
+
+      if (!isNative(fromToken)) {
+        const erc20 = new ethers.Contract(fromToken.address, ERC20_ABI, signer);
+        const allowance = await erc20.allowance(toAddress, ROUTER_ADDRESS);
+        if (allowance < amountIn) {
+          document.getElementById("swapBtnText").innerHTML = "Approving...";
+          const tx = await erc20.approve(ROUTER_ADDRESS, amountIn); await tx.wait();
+        }
+      }
+
+      document.getElementById("swapBtnText").innerHTML = "Swapping...";
+      let tx;
+      if (isNative(fromToken)) {
+        tx = await routerContract.swapExactETHForTokens(amountOutMin, path, toAddress, deadline, { value: amountIn });
+      } else if (isNative(toToken)) {
+        tx = await routerContract.swapExactTokensForETH(amountIn, amountOutMin, path, toAddress, deadline);
+      } else {
+        tx = await routerContract.swapExactTokensForTokens(amountIn, amountOutMin, path, toAddress, deadline);
+      }
+
+      const receipt = await tx.wait();
+      alert(`✅ Swap successful!\nTx: \( {EXPLORER}/tx/ \){receipt.hash}`);
+      document.getElementById("swapBtnText").innerHTML = "Swap Again";
+      loadBalances(); getLiveQuote();
+    }
+
+    function setSlippage(val) { currentSlippage = val; }
+
+    // Event listeners
+    document.getElementById("connectBtn").onclick = connectWallet;
+    document.getElementById("fromTokenBtn").onclick = () => showTokenModal(true);
+    document.getElementById("toTokenBtn").onclick = () => showTokenModal(false);
+    document.getElementById("swapBtn").onclick = executeSwap;
+    document.getElementById("swapTokensBtn").onclick = () => {
+      [fromToken, toToken] = [toToken, fromToken];
+      document.getElementById("fromSymbol").textContent = fromToken ? fromToken.symbol : "Select";
+      document.getElementById("toSymbol").textContent = toToken ? toToken.symbol : "Select";
+      document.getElementById("fromLogo").src = fromToken ? fromToken.logo : "";
+      document.getElementById("toLogo").src = toToken ? toToken.logo : "";
+      if (fromToken && toToken) getLiveQuote();
+    };
+    document.getElementById("searchInput").addEventListener("input", () => renderTokenList(window.currentModalTarget));
+    setInterval(() => { if (signer) loadBalances(); }, 10000);
   </script>
 </body>
 </html>
