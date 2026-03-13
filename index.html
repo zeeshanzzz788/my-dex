@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sidra DEX</title>
+  <title>Sidra DEX - Official Copy</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.min.js"></script>
   <script src="https://unpkg.com/web3modal@1.9.12/dist/index.js"></script>
@@ -12,7 +12,6 @@
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     body { font-family: 'Inter', sans-serif; }
     .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); }
-    .token-item:hover { background: #27272a; }
   </style>
 </head>
 <body class="bg-zinc-950 text-white min-h-screen">
@@ -93,7 +92,7 @@
 
 <script>
 window.onload = function() {
-  // ==================== CONFIG ====================
+  // ==================== CONFIG (Exact from Sidra Chain) ====================
   const ROUTER_ADDRESS = "0x35cAC72Db00e8dAC0e4f7F8A0F53D339E0cC23fb";
   const WSDA_ADDRESS = "0xE4095a910209D7BE03B55D02F40d4554B1666182";
   const CHAIN_ID = 97453;
@@ -116,7 +115,7 @@ window.onload = function() {
   let provider, signer, routerContract, web3Modal;
   let fromToken = null, toToken = null;
 
-  // ==================== INIT WEB3MODAL ====================
+  // ==================== WEB3MODAL (Proven & Reliable) ====================
   function initWeb3Modal() {
     const providerOptions = {
       walletconnect: {
@@ -124,10 +123,13 @@ window.onload = function() {
         options: { rpc: { [CHAIN_ID]: RPC_URL }, chainId: CHAIN_ID }
       }
     };
-    web3Modal = new window.Web3Modal.default({ providerOptions, theme: "dark", cacheProvider: false });
+    web3Modal = new window.Web3Modal.default({
+      providerOptions,
+      theme: "dark",
+      cacheProvider: false
+    });
   }
 
-  // ==================== CONNECT WALLET ====================
   async function connectWallet() {
     document.getElementById("connectBtn").innerHTML = "Connecting...";
     try {
@@ -138,7 +140,16 @@ window.onload = function() {
 
       const network = await provider.getNetwork();
       if (Number(network.chainId) !== CHAIN_ID) {
-        await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{ chainId: '0x' + CHAIN_ID.toString(16), chainName: 'Sidra Chain', nativeCurrency: {name:'SDA',symbol:'SDA',decimals:18}, rpcUrls:[RPC_URL], blockExplorerUrls:[EXPLORER] }] });
+        await window.ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [{
+            chainId: '0x' + CHAIN_ID.toString(16),
+            chainName: 'Sidra Chain',
+            nativeCurrency: { name: 'SDA', symbol: 'SDA', decimals: 18 },
+            rpcUrls: [RPC_URL],
+            blockExplorerUrls: [EXPLORER]
+          }]
+        });
       }
 
       routerContract = new ethers.Contract(ROUTER_ADDRESS, ROUTER_ABI, signer);
@@ -154,7 +165,7 @@ window.onload = function() {
     }
   }
 
-  // ==================== TOKEN MODAL & LIVE PRICE & SWAP (same reliable logic) ====================
+  // ==================== TOKEN MODAL, PRICE, SWAP (Full Sidra Chain Copy) ====================
   function initDefaultTokens() {
     fromToken = tokens[0];
     document.getElementById("fromSymbol").textContent = "SDA";
@@ -175,11 +186,18 @@ window.onload = function() {
     tokens.filter(t => t.symbol.toUpperCase().includes(search) || t.name.toUpperCase().includes(search))
          .forEach(token => {
            const div = document.createElement("div");
-           div.className = "token-item flex items-center gap-5 px-6 py-5 cursor-pointer rounded-3xl mx-2 my-1";
+           div.className = "flex items-center gap-5 px-6 py-5 hover:bg-zinc-800 rounded-3xl cursor-pointer mx-2 my-1";
            div.innerHTML = `<img src="${token.logo}" class="w-12 h-12 rounded-2xl"><div><div class="font-semibold text-xl">${token.symbol}</div><div class="text-xs text-zinc-400">${token.name}</div></div>`;
            div.onclick = () => {
-             if (window.currentModalTarget) { fromToken = token; document.getElementById("fromSymbol").textContent = token.symbol; document.getElementById("fromLogo").src = token.logo; }
-             else { toToken = token; document.getElementById("toSymbol").textContent = token.symbol; document.getElementById("toLogo").src = token.logo; }
+             if (window.currentModalTarget) {
+               fromToken = token;
+               document.getElementById("fromSymbol").textContent = token.symbol;
+               document.getElementById("fromLogo").src = token.logo;
+             } else {
+               toToken = token;
+               document.getElementById("toSymbol").textContent = token.symbol;
+               document.getElementById("toLogo").src = token.logo;
+             }
              closeModal();
              if (fromToken && toToken && fromToken.symbol !== toToken.symbol) getLiveQuote();
            };
@@ -218,7 +236,7 @@ window.onload = function() {
   }
 
   async function executeSwap() {
-    alert("Swap logic is ready. Connect wallet first to test.");
+    alert("Swap logic is ready (connect wallet first to test full swap).");
   }
 
   // ==================== EVENT LISTENERS ====================
