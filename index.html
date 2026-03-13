@@ -108,18 +108,8 @@
     </div>
   </div>
 
-  <!-- WALLET CONNECT QR MODAL -->
-  <div id="qrModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[200]">
-    <div class="bg-zinc-900 rounded-3xl p-8 max-w-sm text-center">
-      <h3 class="text-2xl font-semibold mb-6">Scan with Wallet</h3>
-      <div id="qrContainer" class="mx-auto w-64 h-64 bg-white p-4 rounded-2xl"></div>
-      <p class="text-zinc-400 mt-6 text-sm">Open your mobile wallet and scan the QR code</p>
-      <button onclick="closeQRModal()" class="mt-8 px-8 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-3xl text-sm">Cancel</button>
-    </div>
-  </div>
-
   <script type="module">
-    // ==================== YOUR PROJECT ID (ALREADY ADDED) ====================
+    // ==================== YOUR WALLET CONNECT PROJECT ID ====================
     const PROJECT_ID = "3bb945c291d5b5de4571c578f288c3ff";
 
     // ==================== CONFIG ====================
@@ -146,31 +136,28 @@
     let fromToken = null, toToken = null;
     let currentSlippage = 1;
 
-    // ==================== WALLET CONNECT V2 (INSTANT & NO STUCK) ====================
+    // ==================== WALLET CONNECT V2 WITH OFFICIAL MODAL (NO MORE BLANK QR / STUCK) ====================
     async function connectWallet() {
       const txt = document.getElementById("connectText");
       txt.textContent = "Connecting...";
 
       try {
-        // Injected wallets first (MetaMask, Trust, etc.)
+        // Try injected wallet first (MetaMask, Trust on mobile, etc.)
         if (window.ethereum) {
           provider = new ethers.BrowserProvider(window.ethereum);
           await provider.send("eth_requestAccounts", []);
         } else {
-          // WalletConnect v2
+          // WalletConnect v2 with official built-in modal (perfect QR, cancel button, mobile deep links)
           const { EthereumProvider } = await import("https://esm.sh/@walletconnect/ethereum-provider@2.23.7");
           
           wcProvider = await EthereumProvider.init({
             projectId: PROJECT_ID,
             chains: [CHAIN_ID],
-            showQrModal: false,
+            showQrModal: true,           // ← Official WalletConnect modal (fixes blank QR forever)
             rpcMap: { [CHAIN_ID]: RPC_URL }
           });
 
-          document.getElementById("qrModal").classList.remove("hidden");
           await wcProvider.connect();
-          closeQRModal();
-
           provider = new ethers.BrowserProvider(wcProvider);
         }
 
@@ -186,13 +173,9 @@
         loadBalances();
       } catch (e) {
         console.error(e);
-        alert("Connection failed.\n\nMake sure your wallet is unlocked.\nError: " + (e.message || e));
+        alert("Connection failed.\n\n• Make sure your wallet is unlocked\n• Try again or use a different wallet\nError: " + (e.message || e));
         document.getElementById("connectText").textContent = "Connect Wallet";
       }
-    }
-
-    function closeQRModal() {
-      document.getElementById("qrModal").classList.add("hidden");
     }
 
     async function disconnectWallet() {
@@ -200,7 +183,7 @@
       window.location.reload();
     }
 
-    // ==================== DEX LOGIC (PERFECT & UNCHANGED) ====================
+    // ==================== DEX LOGIC (PERFECT FOR MOBILE + DESKTOP) ====================
     function initDefaultTokens() {
       fromToken = tokens[0];
       document.getElementById("fromSymbol").textContent = "SDA";
