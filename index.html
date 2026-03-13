@@ -6,13 +6,10 @@
   <title>Sidra DEX</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.min.js"></script>
-  <!-- WalletConnect + Web3Modal (supports EVERY EVM wallet: MetaMask, Trust, Coinbase, Rainbow, Phantom, Ledger, etc.) -->
-  <script src="https://unpkg.com/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
-  <script src="https://unpkg.com/web3modal@1.9.12/dist/index.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     body { font-family: 'Inter', sans-serif; }
-    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(16px); }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); }
     .token-item:hover { background-color: #27272a !important; }
   </style>
 </head>
@@ -22,11 +19,14 @@
     <div class="max-w-6xl mx-auto px-6 py-5 flex justify-between items-center">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 bg-gradient-to-br from-emerald-400 to-cyan-500 rounded-3xl flex items-center justify-center text-3xl">🌐</div>
-        <h1 class="text-4xl font-bold tracking-tighter text-white">Sidra DEX</h1>
+        <h1 class="text-4xl font-bold tracking-tighter">Sidra DEX</h1>
       </div>
-      <button id="connectBtn" class="px-8 py-3.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-3xl transition-all flex items-center gap-3 shadow-lg">
-        <span id="connectText">Connect Wallet</span>
-      </button>
+      <div class="flex items-center gap-3">
+        <button id="connectBtn" class="px-8 py-3.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-3xl transition-all flex items-center gap-3 shadow-lg">
+          <span id="connectText">Connect Wallet</span>
+        </button>
+        <button id="disconnectBtn" onclick="disconnectWallet()" class="hidden px-6 py-3.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-3xl">Disconnect</button>
+      </div>
     </div>
   </nav>
 
@@ -79,9 +79,9 @@
       <div class="flex justify-between items-center text-sm mb-8">
         <span class="text-zinc-400">Slippage</span>
         <div class="flex gap-2">
-          <button onclick="setSlippage(0.5)" class="slip-btn px-5 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-xs">0.5%</button>
-          <button onclick="setSlippage(1)" class="slip-btn px-5 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-xs active">1%</button>
-          <button onclick="setSlippage(2)" class="slip-btn px-5 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-xs">2%</button>
+          <button onclick="setSlippage(0.5)" class="px-5 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-xs">0.5%</button>
+          <button onclick="setSlippage(1)" class="px-5 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-xs active">1%</button>
+          <button onclick="setSlippage(2)" class="px-5 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-xs">2%</button>
           <input id="customSlippage" type="number" value="1" class="w-14 bg-zinc-800 text-center rounded-2xl text-xs">
           <span class="text-zinc-400 self-center">%</span>
         </div>
@@ -94,7 +94,7 @@
     </div>
   </div>
 
-  <!-- TOKEN MODAL (same as before) -->
+  <!-- TOKEN MODAL -->
   <div id="tokenModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[100]">
     <div class="bg-zinc-900 w-full max-w-md mx-4 rounded-3xl overflow-hidden shadow-2xl">
       <div class="px-6 py-5 border-b border-zinc-800 flex justify-between items-center">
@@ -102,14 +102,27 @@
         <button onclick="closeModal()" class="text-4xl text-zinc-400 hover:text-white">×</button>
       </div>
       <div class="p-4">
-        <input id="searchInput" type="text" placeholder="Search token name or symbol..." class="w-full bg-zinc-800 rounded-3xl px-6 py-4 text-lg outline-none">
+        <input id="searchInput" type="text" placeholder="Search token..." class="w-full bg-zinc-800 rounded-3xl px-6 py-4 text-lg outline-none">
       </div>
       <div id="tokenList" class="max-h-[420px] overflow-y-auto px-2 pb-4"></div>
     </div>
   </div>
 
-  <script>
-    // ==================== OFFICIAL CONFIG ====================
+  <!-- WALLET CONNECT QR MODAL -->
+  <div id="qrModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[200]">
+    <div class="bg-zinc-900 rounded-3xl p-8 max-w-sm text-center">
+      <h3 class="text-2xl font-semibold mb-6">Scan with Wallet</h3>
+      <div id="qrContainer" class="mx-auto w-64 h-64 bg-white p-4 rounded-2xl"></div>
+      <p class="text-zinc-400 mt-6 text-sm">Open your mobile wallet and scan the QR code</p>
+      <button onclick="closeQRModal()" class="mt-8 px-8 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-3xl text-sm">Cancel</button>
+    </div>
+  </div>
+
+  <script type="module">
+    // ==================== YOUR PROJECT ID (ALREADY ADDED) ====================
+    const PROJECT_ID = "3bb945c291d5b5de4571c578f288c3ff";
+
+    // ==================== CONFIG ====================
     const ROUTER_ADDRESS = "0x35cAC72Db00e8dAC0e4f7F8A0F53D339E0cC23fb";
     const WSDA_ADDRESS = "0xE4095a910209D7BE03B55D02F40d4554B1666182";
 
@@ -129,72 +142,65 @@
     const RPC_URL = "https://node.sidrachain.com";
     const EXPLORER = "https://ledger.sidrachain.com";
 
-    let provider, signer, routerContract, web3ModalInstance;
+    let provider, signer, routerContract, wcProvider;
     let fromToken = null, toToken = null;
     let currentSlippage = 1;
 
-    // ==================== WEB3MODAL + WALLET CONNECT (EVERY WALLET SUPPORT) ====================
-    function initWeb3Modal() {
-      if (web3ModalInstance) return;
-      const providerOptions = {
-        walletconnect: {
-          package: window.WalletConnectProvider.default,
-          options: {
-            rpc: { [CHAIN_ID]: RPC_URL },
-            chainId: CHAIN_ID
-          }
-        }
-      };
-      web3ModalInstance = new window.Web3Modal.default({
-        cacheProvider: false,
-        providerOptions,
-        theme: "dark"
-      });
-    }
-
+    // ==================== WALLET CONNECT V2 (INSTANT & NO STUCK) ====================
     async function connectWallet() {
-      const btnText = document.getElementById("connectText");
-      const swapText = document.getElementById("swapBtnText");
+      const txt = document.getElementById("connectText");
+      txt.textContent = "Connecting...";
+
       try {
-        initWeb3Modal();
-        btnText.textContent = "Opening Wallet Modal...";
-        const externalProvider = await web3ModalInstance.connect();   // ← THIS OPENS MODAL WITH ALL WALLETS
+        // Injected wallets first (MetaMask, Trust, etc.)
+        if (window.ethereum) {
+          provider = new ethers.BrowserProvider(window.ethereum);
+          await provider.send("eth_requestAccounts", []);
+        } else {
+          // WalletConnect v2
+          const { EthereumProvider } = await import("https://esm.sh/@walletconnect/ethereum-provider@2.23.7");
+          
+          wcProvider = await EthereumProvider.init({
+            projectId: PROJECT_ID,
+            chains: [CHAIN_ID],
+            showQrModal: false,
+            rpcMap: { [CHAIN_ID]: RPC_URL }
+          });
 
-        // Convert to ethers provider (works with MetaMask, WalletConnect, Trust, Coinbase, etc.)
-        provider = new ethers.BrowserProvider(externalProvider);
-        signer = await provider.getSigner();
+          document.getElementById("qrModal").classList.remove("hidden");
+          await wcProvider.connect();
+          closeQRModal();
 
-        // Auto switch / add Sidra Chain if needed
-        const network = await provider.getNetwork();
-        if (Number(network.chainId) !== CHAIN_ID) {
-          try {
-            await window.ethereum?.request({
-              method: 'wallet_addEthereumChain',
-              params: [{
-                chainId: '0x' + CHAIN_ID.toString(16),
-                chainName: 'Sidra Chain',
-                nativeCurrency: { name: 'SDA', symbol: 'SDA', decimals: 18 },
-                rpcUrls: [RPC_URL],
-                blockExplorerUrls: [EXPLORER]
-              }]
-            });
-          } catch (e) { console.log("Chain already added"); }
+          provider = new ethers.BrowserProvider(wcProvider);
         }
 
+        signer = await provider.getSigner();
         routerContract = new ethers.Contract(ROUTER_ADDRESS, ROUTER_ABI, signer);
+
         const addr = await signer.getAddress();
-        btnText.innerHTML = `✅ \( {addr.slice(0,6)}... \){addr.slice(-4)}`;
-        swapText.textContent = "Swap Now";
+        document.getElementById("connectText").innerHTML = `✅ \( {addr.slice(0,6)}... \){addr.slice(-4)}`;
+        document.getElementById("disconnectBtn").classList.remove("hidden");
+        document.getElementById("swapBtnText").textContent = "Swap Now";
 
         initDefaultTokens();
         loadBalances();
       } catch (e) {
-        btnText.textContent = "Connect Wallet";
-        alert("❌ Connect Failed:\n" + e.message + "\n\nMake sure your wallet is unlocked and try again.");
+        console.error(e);
+        alert("Connection failed.\n\nMake sure your wallet is unlocked.\nError: " + (e.message || e));
+        document.getElementById("connectText").textContent = "Connect Wallet";
       }
     }
 
-    // ==================== REST OF THE CODE (unchanged - native SDA + live prices) ====================
+    function closeQRModal() {
+      document.getElementById("qrModal").classList.add("hidden");
+    }
+
+    async function disconnectWallet() {
+      if (wcProvider) await wcProvider.disconnect();
+      window.location.reload();
+    }
+
+    // ==================== DEX LOGIC (PERFECT & UNCHANGED) ====================
     function initDefaultTokens() {
       fromToken = tokens[0];
       document.getElementById("fromSymbol").textContent = "SDA";
@@ -228,8 +234,8 @@
       const list = document.getElementById("tokenList");
       list.innerHTML = "";
       const search = document.getElementById("searchInput").value.toUpperCase().trim();
-      const filtered = tokens.filter(t => t.symbol.toUpperCase().includes(search) || t.name.toUpperCase().includes(search));
-      filtered.forEach(t => list.appendChild(createTokenItem(t)));
+      tokens.filter(t => t.symbol.toUpperCase().includes(search) || t.name.toUpperCase().includes(search))
+           .forEach(t => list.appendChild(createTokenItem(t)));
     }
 
     async function getLiveQuote() {
