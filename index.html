@@ -3,155 +3,125 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Sidra DEX</title>
+  <title>Sidra DEX</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     body { font-family: 'Inter', sans-serif; }
-    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(12px); }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(16px); }
+    .token-item:hover { background-color: #27272a !important; }
   </style>
 </head>
 <body class="bg-zinc-950 text-white min-h-screen">
 
-  <!-- NAVBAR -->
-  <nav class="border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-md fixed w-full z-50">
-    <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+  <nav class="border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-md fixed w-full z-50">
+    <div class="max-w-6xl mx-auto px-6 py-5 flex justify-between items-center">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-2xl flex items-center justify-center text-2xl font-bold">💱</div>
-        <h1 class="text-3xl font-bold tracking-tighter">My Sidra DEX</h1>
+        <div class="w-10 h-10 bg-gradient-to-br from-emerald-400 to-cyan-500 rounded-3xl flex items-center justify-center text-3xl">🌐</div>
+        <h1 class="text-4xl font-bold tracking-tighter text-white">Sidra DEX</h1>
       </div>
-      <button id="connectBtn" 
-              class="px-6 py-3 bg-white text-black font-semibold rounded-2xl hover:bg-zinc-200 transition flex items-center gap-2">
+      <button id="connectBtn" class="px-8 py-3.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-3xl transition-all flex items-center gap-3 shadow-lg">
         <span id="connectText">Connect Wallet</span>
       </button>
     </div>
   </nav>
 
-  <div class="max-w-2xl mx-auto pt-28 pb-12 px-6">
-    <!-- SWAP CARD -->
+  <div class="max-w-2xl mx-auto pt-32 pb-16 px-5">
     <div class="glass border border-zinc-700 rounded-3xl p-8 shadow-2xl">
-      
       <!-- FROM -->
-      <div class="mb-6">
-        <div class="flex justify-between text-sm mb-2 text-zinc-400">
+      <div class="mb-8">
+        <div class="flex justify-between mb-3 text-sm text-zinc-400">
           <span>From</span>
-          <span id="fromBalance" class="cursor-pointer hover:text-white">Balance: 0 SDA</span>
+          <span id="fromBalance" class="font-medium">Balance: 0 SDA</span>
         </div>
-        <div class="flex gap-4 bg-zinc-900 rounded-2xl p-4">
-          <button id="fromTokenBtn" 
-                  class="flex items-center gap-3 bg-zinc-800 hover:bg-zinc-700 transition px-6 py-3 rounded-2xl font-medium">
-            <img id="fromLogo" src="https://placehold.co/32x32/00ffaa/000000?text=SDA" class="w-8 h-8 rounded-full">
-            <span id="fromSymbol">SDA</span>
-            <span class="text-xs">▼</span>
+        <div class="flex gap-4 bg-zinc-900 rounded-3xl p-5">
+          <button id="fromTokenBtn" class="flex items-center gap-4 bg-zinc-800 hover:bg-zinc-700 px-6 py-4 rounded-3xl font-medium transition">
+            <img id="fromLogo" src="https://placehold.co/48x48/00ffaa/000000?text=SDA" class="w-10 h-10 rounded-2xl">
+            <span id="fromSymbol" class="text-2xl">SDA</span>
+            <span class="text-xl text-zinc-400">▼</span>
           </button>
-          <input id="fromAmount" type="text" placeholder="0.00" 
-                 class="flex-1 bg-transparent text-4xl font-medium outline-none text-right">
+          <input id="fromAmount" type="text" placeholder="0.00" class="flex-1 bg-transparent text-5xl font-medium outline-none text-right placeholder-zinc-500">
         </div>
       </div>
 
-      <!-- SWAP ARROW -->
-      <div class="flex justify-center -my-4 relative z-10">
-        <button id="swapTokensBtn" 
-                class="bg-zinc-900 border border-zinc-700 hover:border-cyan-400 w-11 h-11 rounded-2xl flex items-center justify-center transition text-2xl">
-          ⇄
-        </button>
+      <!-- SWAP ICON -->
+      <div class="flex justify-center -mt-6 mb-6 relative z-10">
+        <button id="swapTokensBtn" class="bg-zinc-900 border-2 border-zinc-700 hover:border-emerald-400 w-14 h-14 rounded-3xl flex items-center justify-center text-4xl transition-all active:scale-90">⇄</button>
       </div>
 
       <!-- TO -->
-      <div class="mt-6">
-        <div class="flex justify-between text-sm mb-2 text-zinc-400">
+      <div class="mb-8">
+        <div class="flex justify-between mb-3 text-sm text-zinc-400">
           <span>To</span>
-          <span id="toBalance" class="cursor-pointer hover:text-white">Balance: 0</span>
+          <span id="toBalance" class="font-medium">Balance: 0</span>
         </div>
-        <div class="flex gap-4 bg-zinc-900 rounded-2xl p-4">
-          <button id="toTokenBtn" 
-                  class="flex items-center gap-3 bg-zinc-800 hover:bg-zinc-700 transition px-6 py-3 rounded-2xl font-medium">
-            <img id="toLogo" src="https://placehold.co/32x32" class="w-8 h-8 rounded-full">
-            <span id="toSymbol">Select Token</span>
-            <span class="text-xs">▼</span>
+        <div class="flex gap-4 bg-zinc-900 rounded-3xl p-5">
+          <button id="toTokenBtn" class="flex items-center gap-4 bg-zinc-800 hover:bg-zinc-700 px-6 py-4 rounded-3xl font-medium transition">
+            <img id="toLogo" src="https://placehold.co/48x48" class="w-10 h-10 rounded-2xl">
+            <span id="toSymbol" class="text-2xl">Select Token</span>
+            <span class="text-xl text-zinc-400">▼</span>
           </button>
-          <input id="toAmount" type="text" placeholder="0.00" readonly
-                 class="flex-1 bg-transparent text-4xl font-medium outline-none text-right text-emerald-400">
+          <input id="toAmount" type="text" placeholder="0.00" readonly class="flex-1 bg-transparent text-5xl font-medium outline-none text-right text-emerald-400">
         </div>
       </div>
 
-      <!-- LIVE PRICE & ESTIMATE -->
-      <div id="priceInfo" class="mt-6 text-sm text-zinc-400 flex justify-between items-center bg-zinc-900/50 rounded-2xl px-6 py-3">
-        <span>1 <span id="priceFromSymbol">SDA</span> = <span id="livePrice">0.00</span> <span id="priceToSymbol"></span></span>
-        <span id="estimateText" class="text-emerald-400 font-medium"></span>
+      <!-- PRICE -->
+      <div id="priceInfo" class="bg-zinc-900/70 rounded-3xl p-6 text-sm flex justify-between items-center mb-8">
+        <div>1 <span id="priceFromSymbol">SDA</span> ≈ <span id="livePrice" class="font-semibold">0.00</span> <span id="priceToSymbol"></span></div>
+        <div id="estimateText" class="text-emerald-400 font-medium"></div>
       </div>
 
       <!-- SLIPPAGE -->
-      <div class="mt-6 flex items-center justify-between text-sm">
-        <span class="text-zinc-400">Slippage Tolerance</span>
+      <div class="flex justify-between items-center text-sm mb-8">
+        <span class="text-zinc-400">Slippage</span>
         <div class="flex gap-2">
-          <button onclick="setSlippage(0.5)" class="px-4 py-1 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-xs">0.5%</button>
-          <button onclick="setSlippage(1)" class="px-4 py-1 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-xs">1%</button>
-          <button onclick="setSlippage(2)" class="px-4 py-1 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-xs">2%</button>
-          <input id="customSlippage" type="number" value="1" class="w-16 bg-zinc-800 text-center rounded-xl text-xs">
-          <span class="text-xs text-zinc-400 self-center">%</span>
+          <button onclick="setSlippage(0.5)" class="slip-btn px-5 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-xs">0.5%</button>
+          <button onclick="setSlippage(1)" class="slip-btn px-5 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-xs active">1%</button>
+          <button onclick="setSlippage(2)" class="slip-btn px-5 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-xs">2%</button>
+          <input id="customSlippage" type="number" value="1" class="w-14 bg-zinc-800 text-center rounded-2xl text-xs">
+          <span class="text-zinc-400 self-center">%</span>
         </div>
       </div>
 
       <!-- SWAP BUTTON -->
-      <button id="swapBtn" 
-              class="mt-8 w-full py-5 bg-gradient-to-r from-cyan-500 to-purple-600 font-semibold text-xl rounded-2xl hover:brightness-110 transition disabled:opacity-50 flex items-center justify-center gap-3">
-        <span id="swapBtnText">Connect Wallet</span>
+      <button id="swapBtn" onclick="executeSwap()" class="w-full py-6 bg-gradient-to-r from-emerald-500 to-cyan-500 text-xl font-bold rounded-3xl hover:brightness-110 transition-all flex items-center justify-center gap-3 disabled:opacity-50">
+        <span id="swapBtnText">Connect Wallet to Start</span>
       </button>
     </div>
+  </div>
 
-    <!-- TOKEN MODAL -->
-    <div id="tokenModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-      <div class="bg-zinc-900 rounded-3xl w-full max-w-md mx-4 overflow-hidden">
-        <div class="p-6 border-b border-zinc-800 flex justify-between">
-          <h3 class="text-xl font-semibold">Select Token</h3>
-          <button onclick="closeModal()" class="text-3xl leading-none">×</button>
-        </div>
-        <input id="searchInput" type="text" placeholder="Search token..." 
-               class="w-full bg-zinc-950 px-6 py-4 outline-none text-lg">
-        <div id="tokenList" class="max-h-96 overflow-y-auto p-2"></div>
+  <!-- TOKEN MODAL -->
+  <div id="tokenModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[100]">
+    <div class="bg-zinc-900 w-full max-w-md mx-4 rounded-3xl overflow-hidden shadow-2xl">
+      <div class="px-6 py-5 border-b border-zinc-800 flex justify-between items-center">
+        <h3 class="text-2xl font-semibold">Select Token</h3>
+        <button onclick="closeModal()" class="text-4xl text-zinc-400 hover:text-white">×</button>
       </div>
+      <div class="p-4">
+        <input id="searchInput" type="text" placeholder="Search token name or symbol..." class="w-full bg-zinc-800 rounded-3xl px-6 py-4 text-lg outline-none">
+      </div>
+      <div id="tokenList" class="max-h-[420px] overflow-y-auto px-2 pb-4"></div>
     </div>
   </div>
 
   <script>
-    // ==================== CONFIGURE HERE ONLY ====================
-    const ROUTER_ADDRESS = "0x35cAC72Db00e8dAC0e4f7F8A0F53D339E0cC23fb"; // ← Official Sidra DEX Router
-
-    // Wrapped SDA (required for native routing)
+    // ==================== OFFICIAL CONFIG (DO NOT CHANGE) ====================
+    const ROUTER_ADDRESS = "0x35cAC72Db00e8dAC0e4f7F8A0F53D339E0cC23fb";
     const WSDA_ADDRESS = "0xE4095a910209D7BE03B55D02F40d4554B1666182";
 
     const tokens = [
-      // Native SDA - shown everywhere
       { address: null, symbol: "SDA", name: "Sidra Digital Assets", decimals: 18, logo: "https://placehold.co/64x64/00ffaa/000000?text=SDA", isNative: true },
-      
-      // Official Sidra DEX Tokens (all actively traded pairs)
-      { address: "0xE4095a910209D7BE03B55D02F40d4554B1666182", symbol: "WSDA", name: "Wrapped SDA", decimals: 18, logo: "https://placehold.co/64x64/00ff00/000000?text=WSDA", isNative: false },
-      { address: "0x345b20d4fca08376f19145c36c531a1821af96c4", symbol: "VPD", name: "VPD Token", decimals: 18, logo: "https://placehold.co/64x64/ffaa00/000000?text=VPD", isNative: false },
+      { address: "0xE4095a910209D7BE03B55D02F40d4554B1666182", symbol: "WSDA", name: "Wrapped SDA", decimals: 18, logo: "https://placehold.co/64x64/00ff88/000000?text=WSDA", isNative: false },
+      { address: "0x345b20d4fca08376f19145c36c531a1821af96c4", symbol: "VPD", name: "VPD Token", decimals: 18, logo: "https://placehold.co/64x64/ffcc00/000000?text=VPD", isNative: false },
       { address: "0xf74106911432657a24b0d85257d40f24f801cc01", symbol: "MBF", name: "EBMOF", decimals: 18, logo: "https://placehold.co/64x64/aa00ff/000000?text=MBF", isNative: false },
       { address: "0xb6f440a059d24ca305bce6f25115d09e9dbea653", symbol: "ECSDA", name: "ECOSIDRA", decimals: 18, logo: "https://placehold.co/64x64/00aaff/000000?text=ECSDA", isNative: false },
       { address: "0x9b61324f0bee10f4624fe6e75c60943b73125e81", symbol: "ARMS", name: "Sidra Aram Travel", decimals: 18, logo: "https://placehold.co/64x64/aaff00/000000?text=ARMS", isNative: false },
       { address: "0x88a53e067a6d2be71248d7b660ae72cc47f82d88", symbol: "NGEC", name: "NEWGEN GLOBAL MARKETING", decimals: 18, logo: "https://placehold.co/64x64/ff00aa/000000?text=NGEC", isNative: false }
-      
-      // Add more tokens here exactly like above (get address from https://ledger.sidrachain.com)
     ];
 
-    // Router ABI (full native SDA support)
-    const ROUTER_ABI = [
-      "function getAmountsOut(uint amountIn, address[] path) view returns (uint[] memory)",
-      "function swapExactTokensForTokens(uint amountIn, uint amountOutMin, address[] path, address to, uint deadline) returns (uint[] memory)",
-      "function swapExactETHForTokens(uint amountOutMin, address[] path, address to, uint deadline) payable returns (uint[] memory)",
-      "function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] path, address to, uint deadline) returns (uint[] memory)"
-    ];
-
-    const ERC20_ABI = [
-      "function balanceOf(address) view returns (uint256)",
-      "function allowance(address owner, address spender) view returns (uint256)",
-      "function approve(address spender, uint256 amount) returns (bool)"
-    ];
-
-    // Chain config
+    const ROUTER_ABI = ["function getAmountsOut(uint amountIn, address[] path) view returns (uint[] memory)","function swapExactTokensForTokens(uint amountIn, uint amountOutMin, address[] path, address to, uint deadline) returns (uint[] memory)","function swapExactETHForTokens(uint amountOutMin, address[] path, address to, uint deadline) payable returns (uint[] memory)","function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] path, address to, uint deadline) returns (uint[] memory)"];
+    const ERC20_ABI = ["function balanceOf(address) view returns (uint256)","function allowance(address owner, address spender) view returns (uint256)","function approve(address spender, uint256 amount) returns (bool)"];
     const CHAIN_ID = 97453;
     const RPC_URL = "https://node.sidrachain.com";
     const EXPLORER = "https://ledger.sidrachain.com";
@@ -160,168 +130,185 @@
     let fromToken = null, toToken = null;
     let currentSlippage = 1;
 
-    tailwind.config = { content: ["*"], theme: { extend: {} } };
+    // ==================== PURE DOM TOKEN ITEM (NO MORE BROKEN SYMBOLS) ====================
+    function createTokenItem(token) {
+      const div = document.createElement("div");
+      div.className = "token-item flex items-center gap-5 px-6 py-5 hover:bg-zinc-800 rounded-3xl cursor-pointer mx-2 my-1 transition";
 
-    // ==================== HELPERS ====================
-    function isNative(token) { return token && token.isNative === true; }
-    function getPath(fromT, toT) {
-      if (isNative(fromT)) return [WSDA_ADDRESS, toT.address];
-      if (isNative(toT)) return [fromT.address, WSDA_ADDRESS];
-      return [fromT.address, toT.address];
+      const img = document.createElement("img");
+      img.src = token.logo; img.className = "w-12 h-12 rounded-2xl";
+
+      const info = document.createElement("div");
+      const sym = document.createElement("div"); sym.className = "font-semibold text-xl"; sym.textContent = token.symbol;
+      const name = document.createElement("div"); name.className = "text-xs text-zinc-400"; name.textContent = token.name;
+
+      info.append(sym, name);
+      div.append(img, info);
+      return div;
     }
 
-    async function getTokenBalance(token, owner) {
-      if (isNative(token)) return await provider.getBalance(owner);
-      const contract = new ethers.Contract(token.address, ERC20_ABI, provider);
-      return await contract.balanceOf(owner);
-    }
-
-    // ==================== WALLET + DEFAULTS ====================
+    // ==================== WALLET CONNECT (WITH CLEAR ERRORS) ====================
     async function connectWallet() {
-      if (!window.ethereum) return alert("Please install MetaMask!");
-      provider = new ethers.BrowserProvider(window.ethereum);
-      signer = await provider.getSigner();
-      
-      const network = await provider.getNetwork();
-      if (Number(network.chainId) !== CHAIN_ID) {
-        try { await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{ chainId: '0x' + CHAIN_ID.toString(16), chainName: 'Sidra Chain', nativeCurrency: { name: 'SDA', symbol: 'SDA', decimals: 18 }, rpcUrls: [RPC_URL], blockExplorerUrls: [EXPLORER] }] }); }
-        catch (e) { alert("Please switch to Sidra Chain in MetaMask"); return; }
-      }
+      const btnText = document.getElementById("connectText");
+      const swapText = document.getElementById("swapBtnText");
+      try {
+        if (!window.ethereum) throw new Error("MetaMask not found. Please install it.");
+        provider = new ethers.BrowserProvider(window.ethereum);
+        signer = await provider.getSigner();
 
-      routerContract = new ethers.Contract(ROUTER_ADDRESS, ROUTER_ABI, signer);
-      document.getElementById("connectText").innerHTML = `✅ \( {signer.address.slice(0,6)}... \){signer.address.slice(-4)}`;
-      document.getElementById("swapBtnText").innerHTML = "Swap";
-      initDefaultTokens();
-      loadBalances();
+        let network = await provider.getNetwork();
+        if (Number(network.chainId) !== CHAIN_ID) {
+          btnText.textContent = "Adding Sidra Chain...";
+          await window.ethereum.request({method: 'wallet_addEthereumChain', params: [{chainId: '0x' + CHAIN_ID.toString(16), chainName: 'Sidra Chain', nativeCurrency: {name:'SDA',symbol:'SDA',decimals:18}, rpcUrls:[RPC_URL], blockExplorerUrls:[EXPLORER]}]});
+        }
+
+        routerContract = new ethers.Contract(ROUTER_ADDRESS, ROUTER_ABI, signer);
+        const addr = await signer.getAddress();
+        btnText.innerHTML = `✅ \( {addr.slice(0,6)}... \){addr.slice(-4)}`;
+        swapText.textContent = "Swap Now";
+
+        initDefaultTokens();
+        loadBalances();
+      } catch (e) {
+        alert("❌ Wallet Connect Failed:\n" + e.message + "\n\n1. Make sure MetaMask is unlocked\n2. Switch to Sidra Chain");
+        btnText.textContent = "Connect Wallet";
+      }
     }
 
     function initDefaultTokens() {
-      fromToken = tokens[0]; // SDA
+      fromToken = tokens[0];
       document.getElementById("fromSymbol").textContent = "SDA";
       document.getElementById("fromLogo").src = tokens[0].logo;
     }
 
-    // ==================== TOKEN MODAL & LIST ====================
+    // ==================== MODAL & TOKEN LIST ====================
     function showTokenModal(isFrom) {
-      const modal = document.getElementById("tokenModal");
-      modal.classList.remove("hidden");
-      renderTokenList(isFrom);
+      document.getElementById("tokenModal").classList.remove("hidden");
       window.currentModalTarget = isFrom;
+      renderTokenList();
     }
-
     function closeModal() { document.getElementById("tokenModal").classList.add("hidden"); }
 
-    function renderTokenList(isFrom) {
+    function renderTokenList() {
       const list = document.getElementById("tokenList");
       list.innerHTML = "";
-      const search = document.getElementById("searchInput").value.toUpperCase();
+      const search = document.getElementById("searchInput").value.toUpperCase().trim();
 
-      tokens.filter(t => t.symbol.toUpperCase().includes(search) || t.name.toUpperCase().includes(search))
-           .forEach(token => {
-             const div = document.createElement("div");
-             div.className = "flex items-center gap-4 px-6 py-4 hover:bg-zinc-800 rounded-2xl cursor-pointer";
-             div.innerHTML = `<img src="\( {token.logo}" class="w-10 h-10 rounded-full"><div><div class="font-semibold"> \){token.symbol}</div><div class="text-xs text-zinc-400">${token.name}</div></div>`;
-             div.onclick = () => {
-               if (window.currentModalTarget) {
-                 fromToken = token; document.getElementById("fromSymbol").textContent = token.symbol; document.getElementById("fromLogo").src = token.logo;
-               } else {
-                 toToken = token; document.getElementById("toSymbol").textContent = token.symbol; document.getElementById("toLogo").src = token.logo;
-               }
-               closeModal();
-               if (fromToken && toToken && fromToken.symbol !== toToken.symbol) getLiveQuote();
-             };
-             list.appendChild(div);
-           });
+      const filtered = tokens.filter(t => t.symbol.toUpperCase().includes(search) || t.name.toUpperCase().includes(search));
+
+      filtered.forEach(token => {
+        const item = createTokenItem(token);
+        item.onclick = () => {
+          if (window.currentModalTarget) {
+            fromToken = token;
+            document.getElementById("fromSymbol").textContent = token.symbol;
+            document.getElementById("fromLogo").src = token.logo;
+          } else {
+            toToken = token;
+            document.getElementById("toSymbol").textContent = token.symbol;
+            document.getElementById("toLogo").src = token.logo;
+          }
+          closeModal();
+          if (fromToken && toToken && fromToken.symbol !== toToken.symbol) getLiveQuote();
+        };
+        list.appendChild(item);
+      });
     }
 
-    // ==================== LIVE PRICE + ESTIMATE ====================
+    // ==================== LIVE PRICE & ESTIMATE ====================
     async function getLiveQuote() {
       if (!fromToken || !toToken || !signer || fromToken.symbol === toToken.symbol) return;
-      const amountStr = document.getElementById("fromAmount").value || "0";
-      if (parseFloat(amountStr) <= 0) return;
+      const amountStr = document.getElementById("fromAmount").value.trim();
+      if (!amountStr || parseFloat(amountStr) <= 0) return;
 
       const amountIn = ethers.parseUnits(amountStr, fromToken.decimals);
-      const path = getPath(fromToken, toToken);
+      const path = isNative(fromToken) ? [WSDA_ADDRESS, toToken.address] : isNative(toToken) ? [fromToken.address, WSDA_ADDRESS] : [fromToken.address, toToken.address];
 
       try {
         const amountsOut = await routerContract.getAmountsOut(amountIn, path);
-        const estimatedOut = ethers.formatUnits(amountsOut[1], toToken.decimals);
-        document.getElementById("toAmount").value = parseFloat(estimatedOut).toFixed(6);
-        const price = (parseFloat(estimatedOut) / parseFloat(amountStr)).toFixed(6);
+        const estimated = ethers.formatUnits(amountsOut[1], toToken.decimals);
+        document.getElementById("toAmount").value = parseFloat(estimated).toFixed(6);
+        const price = (parseFloat(estimated) / parseFloat(amountStr)).toFixed(4);
         document.getElementById("livePrice").textContent = price;
         document.getElementById("priceFromSymbol").textContent = fromToken.symbol;
         document.getElementById("priceToSymbol").textContent = toToken.symbol;
-        document.getElementById("estimateText").innerHTML = `≈ ${estimatedOut} ${toToken.symbol}`;
-      } catch (e) { document.getElementById("estimateText").textContent = "No liquidity"; }
+        document.getElementById("estimateText").innerHTML = `≈ ${estimated} ${toToken.symbol}`;
+      } catch (e) {
+        document.getElementById("estimateText").textContent = "No liquidity";
+      }
     }
 
-    let timeout;
-    document.getElementById("fromAmount").addEventListener("input", () => { clearTimeout(timeout); timeout = setTimeout(getLiveQuote, 300); });
+    let quoteTimeout;
+    document.getElementById("fromAmount").addEventListener("input", () => { clearTimeout(quoteTimeout); quoteTimeout = setTimeout(getLiveQuote, 250); });
 
-    // ==================== BALANCES ====================
+    function isNative(t) { return t && t.isNative; }
+
+    // ==================== BALANCES & SWAP (FULL NATIVE SDA SUPPORT) ====================
     async function loadBalances() {
       if (!signer || !fromToken || !toToken) return;
-      const address = await signer.getAddress();
-      const balFrom = await getTokenBalance(fromToken, address);
-      const balTo = await getTokenBalance(toToken, address);
-      document.getElementById("fromBalance").textContent = `Balance: ${ethers.formatUnits(balFrom, fromToken.decimals).slice(0,10)} ${fromToken.symbol}`;
-      document.getElementById("toBalance").textContent = `Balance: ${ethers.formatUnits(balTo, toToken.decimals).slice(0,10)} ${toToken.symbol}`;
+      const addr = await signer.getAddress();
+      const balFrom = isNative(fromToken) ? await provider.getBalance(addr) : await new ethers.Contract(fromToken.address, ERC20_ABI, provider).balanceOf(addr);
+      const balTo = isNative(toToken) ? await provider.getBalance(addr) : await new ethers.Contract(toToken.address, ERC20_ABI, provider).balanceOf(addr);
+      document.getElementById("fromBalance").textContent = `Balance: ${ethers.formatUnits(balFrom, fromToken.decimals).slice(0,9)} ${fromToken.symbol}`;
+      document.getElementById("toBalance").textContent = `Balance: ${ethers.formatUnits(balTo, toToken.decimals).slice(0,9)} ${toToken.symbol}`;
     }
 
-    // ==================== SWAP (Native SDA Fully Supported) ====================
     async function executeSwap() {
-      if (!fromToken || !toToken || fromToken.symbol === toToken.symbol) return alert("Select two different tokens");
-      const amountStr = document.getElementById("fromAmount").value;
-      if (!amountStr || parseFloat(amountStr) <= 0) return alert("Enter amount");
+      const btn = document.getElementById("swapBtn");
+      btn.disabled = true;
+      document.getElementById("swapBtnText").textContent = "Swapping...";
 
-      const amountIn = ethers.parseUnits(amountStr, fromToken.decimals);
-      const amountOutMin = ethers.parseUnits((parseFloat(document.getElementById("toAmount").value) * (1 - currentSlippage/100)).toFixed(6), toToken.decimals);
-      const path = getPath(fromToken, toToken);
-      const deadline = Math.floor(Date.now() / 1000) + 600;
-      const toAddress = await signer.getAddress();
+      try {
+        const amountStr = document.getElementById("fromAmount").value.trim();
+        const amountIn = ethers.parseUnits(amountStr, fromToken.decimals);
+        const estOut = parseFloat(document.getElementById("toAmount").value);
+        const amountOutMin = ethers.parseUnits((estOut * (1 - currentSlippage/100)).toFixed(6), toToken.decimals);
+        const path = isNative(fromToken) ? [WSDA_ADDRESS, toToken.address] : isNative(toToken) ? [fromToken.address, WSDA_ADDRESS] : [fromToken.address, toToken.address];
+        const deadline = Math.floor(Date.now()/1000) + 600;
+        const toAddr = await signer.getAddress();
 
-      if (!isNative(fromToken)) {
-        const erc20 = new ethers.Contract(fromToken.address, ERC20_ABI, signer);
-        const allowance = await erc20.allowance(toAddress, ROUTER_ADDRESS);
-        if (allowance < amountIn) {
-          document.getElementById("swapBtnText").innerHTML = "Approving...";
-          const tx = await erc20.approve(ROUTER_ADDRESS, amountIn); await tx.wait();
+        if (!isNative(fromToken)) {
+          const erc = new ethers.Contract(fromToken.address, ERC20_ABI, signer);
+          if (await erc.allowance(toAddr, ROUTER_ADDRESS) < amountIn) {
+            document.getElementById("swapBtnText").textContent = "Approving...";
+            await (await erc.approve(ROUTER_ADDRESS, amountIn)).wait();
+          }
         }
-      }
 
-      document.getElementById("swapBtnText").innerHTML = "Swapping...";
-      let tx;
-      if (isNative(fromToken)) {
-        tx = await routerContract.swapExactETHForTokens(amountOutMin, path, toAddress, deadline, { value: amountIn });
-      } else if (isNative(toToken)) {
-        tx = await routerContract.swapExactTokensForETH(amountIn, amountOutMin, path, toAddress, deadline);
-      } else {
-        tx = await routerContract.swapExactTokensForTokens(amountIn, amountOutMin, path, toAddress, deadline);
-      }
+        let tx;
+        if (isNative(fromToken)) tx = await routerContract.swapExactETHForTokens(amountOutMin, path, toAddr, deadline, {value: amountIn});
+        else if (isNative(toToken)) tx = await routerContract.swapExactTokensForETH(amountIn, amountOutMin, path, toAddr, deadline);
+        else tx = await routerContract.swapExactTokensForTokens(amountIn, amountOutMin, path, toAddr, deadline);
 
-      const receipt = await tx.wait();
-      alert(`✅ Swap successful!\nTx: \( {EXPLORER}/tx/ \){receipt.hash}`);
-      document.getElementById("swapBtnText").innerHTML = "Swap Again";
-      loadBalances(); getLiveQuote();
+        const receipt = await tx.wait();
+        alert(`✅ Swap Successful!\nTx: \( {EXPLORER}/tx/ \){receipt.hash}`);
+        loadBalances(); getLiveQuote();
+      } catch (e) {
+        alert("Swap failed: " + e.message);
+      } finally {
+        btn.disabled = false;
+        document.getElementById("swapBtnText").textContent = "Swap Now";
+      }
     }
 
     function setSlippage(val) { currentSlippage = val; }
 
-    // Event listeners
+    // Event Listeners
     document.getElementById("connectBtn").onclick = connectWallet;
     document.getElementById("fromTokenBtn").onclick = () => showTokenModal(true);
     document.getElementById("toTokenBtn").onclick = () => showTokenModal(false);
-    document.getElementById("swapBtn").onclick = executeSwap;
     document.getElementById("swapTokensBtn").onclick = () => {
       [fromToken, toToken] = [toToken, fromToken];
-      document.getElementById("fromSymbol").textContent = fromToken ? fromToken.symbol : "Select";
-      document.getElementById("toSymbol").textContent = toToken ? toToken.symbol : "Select";
+      document.getElementById("fromSymbol").textContent = fromToken ? fromToken.symbol : "SDA";
+      document.getElementById("toSymbol").textContent = toToken ? toToken.symbol : "Select Token";
       document.getElementById("fromLogo").src = fromToken ? fromToken.logo : "";
       document.getElementById("toLogo").src = toToken ? toToken.logo : "";
       if (fromToken && toToken) getLiveQuote();
     };
-    document.getElementById("searchInput").addEventListener("input", () => renderTokenList(window.currentModalTarget));
-    setInterval(() => { if (signer) loadBalances(); }, 10000);
+    document.getElementById("searchInput").addEventListener("input", renderTokenList);
+    setInterval(() => { if (signer) loadBalances(); }, 8000);
+
+    tailwind.config = { content: ["*"] };
   </script>
 </body>
 </html>
