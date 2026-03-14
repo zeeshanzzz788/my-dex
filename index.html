@@ -1,292 +1,134 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MySidraDEX - Trade on SidraChain</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
-        body { font-family: 'Inter', system-ui, sans-serif; }
-        .logo-font { font-family: 'Space Grotesk', sans-serif; }
-        .glass { background: rgba(255,255,255,0.06); backdrop-filter: blur(24px); box-shadow: 0 8px 32px -12px rgba(0, 255, 157, 0.15); }
-        .token-card { transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        .token-card:hover { transform: scale(1.04) translateY(-6px); box-shadow: 0 25px 50px -12px rgb(0 255 157 / 0.25); }
-        .swap-button { background: linear-gradient(90deg, #00ff9d, #00b8ff, #00ff9d); background-size: 200% 100%; transition: all 0.4s ease; }
-        .swap-button:hover { background-position: 200% 0; transform: translateY(-2px); box-shadow: 0 0 40px -10px #00ff9d; }
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        .shimmer { animation: shimmer 3s linear infinite; }
-        @keyframes arrowFlip { 0% { transform: rotate(0deg) scale(1); } 50% { transform: rotate(180deg) scale(1.35); } 100% { transform: rotate(360deg) scale(1); } }
-        .flip-arrow { animation: arrowFlip 600ms cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards; }
-        @keyframes modalPop { 0% { opacity: 0; transform: scale(0.7) translateY(40px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
-        .modal-pop { animation: modalPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        @keyframes checkDraw { 0% { stroke-dashoffset: 100; } 100% { stroke-dashoffset: 0; } }
-        .rate-flash { animation: rateFlash 0.8s ease; }
-        @keyframes rateFlash { 0%, 100% { color: #10b981; } 50% { color: #34d399; transform: scale(1.1); } }
-        .loading-dots::after { content: ' .'; animation: dots 1.4s steps(4, end) infinite; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sidra DEX</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.ethers.io/lib/ethers-6.13.umd.min.js"></script>
+  <style>
+    body { background: #000; color: #fff; font-family: system-ui; }
+    .card { background: #18181b; border-radius: 24px; }
+  </style>
 </head>
-<body class="bg-zinc-950 text-white min-h-screen overflow-hidden">
-    <!-- NAVBAR -->
-    <nav class="border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-xl fixed w-full z-50">
-        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-9 h-9 bg-gradient-to-br from-emerald-400 to-cyan-400 rounded-2xl flex items-center justify-center text-2xl animate-pulse">🔹</div>
-                <span class="logo-font text-3xl font-semibold tracking-tighter">MySidra<span class="text-emerald-400">DEX</span></span>
-            </div>
-            <div class="flex items-center gap-8 text-sm font-medium">
-                <a href="#" onclick="switchTab(0)" class="tab-link active text-emerald-400">Swap</a>
-                <a href="#" onclick="switchTab(1)" class="tab-link text-zinc-400 hover:text-white transition-colors">Liquidity</a>
-                <a href="#" onclick="switchTab(2)" class="tab-link text-zinc-400 hover:text-white transition-colors">Pools</a>
-            </div>
-            <button onclick="connectWallet()" id="connect-btn" class="px-7 py-3 bg-white hover:bg-emerald-400 text-zinc-950 font-semibold rounded-2xl flex items-center gap-3 transition-all duration-300">
-                <i class="fa-solid fa-wallet"></i><span>Connect Wallet</span>
-            </button>
-        </div>
-    </nav>
-
-    <div class="pt-28 pb-20 max-w-xl mx-auto px-5">
-        <div class="text-center mb-10">
-            <div class="inline-flex items-center gap-2 px-5 py-1.5 bg-zinc-900 border border-emerald-500/30 rounded-3xl mb-4">
-                <div class="w-2 h-2 bg-emerald-400 rounded-full animate-ping"></div>
-                <span class="text-xs font-medium tracking-widest text-emerald-400">YOUR ROUTER LIVE • 76+ SIDRA TOKENS</span>
-            </div>
-            <h1 class="text-6xl font-semibold logo-font tracking-tighter leading-none mb-2">
-                Swap on <span class="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-cyan-400 to-emerald-400">SidraChain</span>
-            </h1>
-            <p class="text-zinc-400">Native SDA in & out • 76+ tokens • Premium animations</p>
-        </div>
-
-        <!-- SWAP CARD -->
-        <div id="swap-tab" class="glass border border-zinc-700/70 rounded-3xl p-8 shadow-2xl">
-            <!-- FROM -->
-            <div class="mb-4">
-                <div class="flex justify-between text-sm mb-3 px-1">
-                    <span class="text-zinc-400">From</span>
-                    <span id="from-balance" class="font-mono text-emerald-300 text-xs">0.0000 SDA</span>
-                </div>
-                <div class="bg-zinc-900/80 border border-zinc-700 rounded-3xl p-5 flex items-center gap-4">
-                    <button onclick="openTokenModal('from')" id="from-token-btn"
-                            class="flex-shrink-0 flex items-center gap-3 bg-zinc-800 hover:bg-zinc-700 px-6 py-3 rounded-2xl font-medium transition-all active:scale-95">
-                        <span id="from-icon" class="text-3xl">🔹</span>
-                        <span id="from-symbol" class="text-xl">SDA</span>
-                        <i class="fa-solid fa-chevron-down text-xs opacity-60"></i>
-                    </button>
-                    <input id="from-amount" type="text" placeholder="0.0" onkeyup="updateOutput()" 
-                           class="flex-1 bg-transparent text-5xl font-medium outline-none text-right placeholder-zinc-600">
-                </div>
-            </div>
-
-            <!-- SWAP ICON -->
-            <div class="flex justify-center -my-5 relative z-20">
-                <button onclick="swapTokens()" id="swap-icon-btn"
-                        class="w-14 h-14 bg-zinc-900 border-4 border-zinc-800 rounded-2xl flex items-center justify-center hover:border-emerald-400 transition-all active:scale-95">
-                    <i id="swap-icon" class="fa-solid fa-arrow-down-up-across-line text-3xl text-emerald-400"></i>
-                </button>
-            </div>
-
-            <!-- TO -->
-            <div class="mt-4">
-                <div class="flex justify-between text-sm mb-3 px-1">
-                    <span class="text-zinc-400">To (estimated)</span>
-                    <span id="to-balance" class="font-mono text-emerald-300 text-xs">0.0000 VPD</span>
-                </div>
-                <div class="bg-zinc-900/80 border border-zinc-700 rounded-3xl p-5 flex items-center gap-4">
-                    <button onclick="openTokenModal('to')" id="to-token-btn"
-                            class="flex-shrink-0 flex items-center gap-3 bg-zinc-800 hover:bg-zinc-700 px-6 py-3 rounded-2xl font-medium transition-all active:scale-95">
-                        <span id="to-icon" class="text-3xl">🍽️</span>
-                        <span id="to-symbol" class="text-xl">VPD</span>
-                        <i class="fa-solid fa-chevron-down text-xs opacity-60"></i>
-                    </button>
-                    <input id="to-amount" type="text" readonly placeholder="0.0" 
-                           class="flex-1 bg-transparent text-5xl font-medium outline-none text-right text-emerald-300">
-                </div>
-            </div>
-
-            <!-- RATE -->
-            <div class="mt-8 px-2 flex items-center justify-between text-sm">
-                <div class="flex items-center gap-2 text-zinc-400">
-                    <span>Rate</span>
-                    <span id="rate-loading" class="text-[10px] text-emerald-400 loading-dots"></span>
-                </div>
-                <div id="exchange-rate" onclick="this.classList.add('rate-flash');setTimeout(()=>this.classList.remove('rate-flash'),800)"
-                     class="font-mono text-emerald-400 cursor-pointer transition-all">1 SDA ≈ 5.74 VPD</div>
-            </div>
-
-            <!-- SLIPPAGE -->
-            <div class="mt-8 flex justify-between items-center text-xs text-zinc-400 px-1">
-                <button onclick="toggleSettings()" class="flex items-center gap-2 hover:text-white transition-colors">
-                    <i class="fa-solid fa-sliders"></i> Slippage <span id="slippage-display" class="font-mono text-emerald-400">0.5%</span>
-                </button>
-                <div class="font-mono text-[10px]">Router • 0x35cAC72Db00e8dAC0e4f7F8A0F53D339E0cC23fb</div>
-            </div>
-
-            <!-- SWAP BUTTON -->
-            <button onclick="executeSwap()" id="swap-main-btn"
-                    class="swap-button shimmer w-full mt-8 py-6 rounded-3xl text-2xl font-semibold text-black flex items-center justify-center gap-3 shadow-2xl shadow-emerald-500/40 active:scale-[0.97]">
-                <span>Swap Now</span>
-                <i class="fa-solid fa-arrow-right"></i>
-            </button>
-        </div>
+<body class="min-h-screen flex items-center justify-center p-4">
+  <div class="card max-w-md w-full p-8">
+    <div class="flex justify-between items-center mb-8">
+      <h1 class="text-4xl font-bold">Sidra DEX</h1>
+      <button id="connectBtn" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-2xl text-sm font-medium">
+        Connect MetaMask
+      </button>
     </div>
 
-    <!-- TOKEN MODAL -->
-    <div id="token-modal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[999] transition-opacity">
-        <div onclick="event.stopImmediatePropagation()" class="glass border border-zinc-600 rounded-3xl w-full max-w-md mx-4 overflow-hidden modal-pop">
-            <div class="p-6 border-b border-zinc-700 flex justify-between items-center">
-                <span class="font-semibold text-xl">Select Token (76+ on Sidra DEX)</span>
-                <button onclick="closeTokenModal()" class="text-3xl leading-none text-zinc-400 hover:text-white">×</button>
-            </div>
-            <div class="p-6">
-                <input id="token-search" onkeyup="filterTokens()" type="text" class="w-full bg-zinc-900 border border-zinc-700 focus:border-emerald-500 rounded-2xl px-6 py-5 outline-none text-lg" placeholder="Search...">
-            </div>
-            <div id="token-list" class="max-h-[420px] overflow-y-auto px-4 pb-8 space-y-1">
-                <!-- JS filled -->
-            </div>
+    <div class="space-y-6">
+      <!-- Pay -->
+      <div>
+        <p class="text-zinc-400 text-sm mb-2">You pay</p>
+        <div class="flex gap-3">
+          <input id="amountIn" type="text" value="1" class="flex-1 bg-zinc-900 text-3xl p-4 rounded-2xl focus:outline-none">
+          <select id="tokenIn" class="bg-zinc-900 p-4 rounded-2xl text-xl">
+            <option value="0xe4095a910209d7be03b55d02f40d4554b1666182">WSDA</option>
+          </select>
         </div>
+      </div>
+
+      <div class="text-center text-zinc-500">↓</div>
+
+      <!-- Receive -->
+      <div>
+        <p class="text-zinc-400 text-sm mb-2">You receive</p>
+        <div class="flex gap-3">
+          <input id="amountOut" type="text" value="..." readonly class="flex-1 bg-zinc-900 text-3xl p-4 rounded-2xl focus:outline-none">
+          <select id="tokenOut" class="bg-zinc-900 p-4 rounded-2xl text-xl">
+            <option value="0xYourTokenAddressHere">Your Token (change this)</option>
+          </select>
+        </div>
+      </div>
     </div>
 
-    <!-- PROGRESS & SUCCESS MODALS (same as previous) -->
-    <div id="progress-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[2000]">
-        <div class="text-center">
-            <div class="w-20 h-20 mx-auto border-4 border-emerald-400 border-t-transparent rounded-full animate-spin mb-8"></div>
-            <div class="text-3xl font-medium mb-2">Swapping on SidraChain</div>
-            <div id="progress-text" class="text-zinc-400 text-lg">Confirming transaction...</div>
-        </div>
-    </div>
-    <div id="success-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[2000]">
-        <div class="glass rounded-3xl p-10 max-w-sm w-full text-center modal-pop">
-            <svg class="w-24 h-24 mx-auto mb-6 text-emerald-400" fill="none" stroke="currentColor" stroke-width="8" viewBox="0 0 120 120">
-                <circle cx="60" cy="60" r="54" stroke="#10b981" stroke-opacity="0.2"/>
-                <path id="checkmark" class="origin-center" stroke-dasharray="100" stroke-dashoffset="100" d="M35 65 L52 82 L85 38" />
-            </svg>
-            <div class="text-4xl font-semibold mb-2">Swap Complete!</div>
-            <div id="success-details" class="text-emerald-300 font-mono text-sm mb-8"></div>
-            <div class="flex gap-4">
-                <button onclick="closeSuccessModal()" class="flex-1 py-4 border border-zinc-700 hover:bg-zinc-800 rounded-2xl text-lg font-medium transition-colors">Close</button>
-                <a id="explorer-link" target="_blank" class="flex-1 py-4 bg-gradient-to-r from-emerald-400 to-cyan-400 text-black rounded-2xl text-lg font-semibold flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-up-right-from-square"></i> View Tx
-                </a>
-            </div>
-        </div>
-    </div>
+    <button id="swapBtn" class="mt-10 w-full bg-green-600 hover:bg-green-700 py-5 rounded-3xl text-2xl font-semibold disabled:opacity-50">
+      Swap
+    </button>
 
-    <script>
-        // ==================== CONFIG ====================
-        const ROUTER_ADDRESS = "0x35cAC72Db00e8dAC0e4f7F8A0F53D339E0cC23fb";
-        const WSDA = "0xe4095a910209d7be03b55d02f40d4554b1666182"; // Wrapped SDA (used internally by router)
-        const CHAIN_ID = 97453;
-        const RPC = "https://node.sidrachain.com";
-        const EXPLORER = "https://ledger.sidrachain.com";
+    <p id="status" class="text-center text-sm mt-4 text-zinc-400"></p>
+  </div>
 
-        const ROUTER_ABI = [ /* same as before */ 
-            "function WETH() external pure returns (address)",
-            "function getAmountsOut(uint amountIn, address[] calldata path) external view returns (uint[] memory amounts)",
-            "function swapExactTokensForTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external returns (uint[] memory amounts)",
-            "function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline) external payable returns (uint[] memory amounts)",
-            "function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external returns (uint[] memory amounts)"
-        ];
-        const ERC20_ABI = [ /* same */ 
-            "function approve(address spender, uint256 amount) external returns (bool)",
-            "function allowance(address owner, address spender) external view returns (uint256)",
-            "function balanceOf(address) external view returns (uint256)"
-        ];
+  <script>
+    const ROUTER = "0x35cAC72Db00e8dAC0e4f7F8A0F53D339E0cC23fb";
+    const QUOTER = "0xe24929ec26cc2faD91655B3AD3C597Fd477A80F9";
+    const WSDA = "0xe4095a910209d7be03b55d02f40d4554b1666182";
+    let provider, signer, address;
 
-        let provider, signer, userAddress, router;
-        let slippage = 0.005;
+    const connectBtn = document.getElementById('connectBtn');
+    const swapBtn = document.getElementById('swapBtn');
+    const status = document.getElementById('status');
 
-        // ==================== NATIVE SDA + 76+ TOKENS (all known real addresses) ====================
-        const tokens = [
-            { symbol: "SDA", name: "Sidra (Native)", address: "NATIVE", decimals: 18, icon: "🔹" },
-            { symbol: "VPD", name: "Dining Platform Halal", address: "0x345b20d4fca08376f19145c36c531a1821af96c4", decimals: 18, icon: "🍽️" },
-            { symbol: "MBF", name: "EBMOF", address: "0xf74106911432657a24b0d85257d40f24f801cc01", decimals: 18, icon: "🏦" },
-            { symbol: "ECSDA", name: "ECOSIDRA", address: "0xb6f440a059d24ca305bce6f25115d09e9dbea653", decimals: 18, icon: "🌍" },
-            { symbol: "ARMS", name: "Sidra Aram Travel", address: "0x9b61324f0bee10f4624fe6e75c60943b73125e81", decimals: 18, icon: "✈️" },
-            { symbol: "NGEC", name: "NEWGEN GLOBAL MARKETING", address: "0x88a53e067a6d2be71248d7b660ae72cc47f82d88", decimals: 18, icon: "📣" },
-            { symbol: "FARMT", name: "Farm Technology Token", address: "0x0000000000000000000000000000000000000000", decimals: 18, icon: "🌾" }, // replace with real when available
-            { symbol: "AMHS", name: "Affiliate Marketing Halal", address: "0x0000000000000000000000000000000000000000", decimals: 18, icon: "📈" },
-            { symbol: "VPA", name: "VPAWord", address: "0x0000000000000000000000000000000000000000", decimals: 18, icon: "📖" },
-            { symbol: "SSMI", name: "Sidra SkillChain Mission", address: "0x0000000000000000000000000000000000000000", decimals: 18, icon: "🎯" },
-            { symbol: "GPC", name: "GLN Property Chain", address: "0x0000000000000000000000000000000000000000", decimals: 18, icon: "🏠" },
-            { symbol: "VMB", name: "Global Airline Tickets", address: "0x0000000000000000000000000000000000000000", decimals: 18, icon: "✈️" },
-            { symbol: "PI", name: "PI Network", address: "0x0000000000000000000000000000000000000000", decimals: 18, icon: "🔵" },
-            { symbol: "DQLP", name: "DQLP Token", address: "0x0000000000000000000000000000000000000000", decimals: 18, icon: "📦" },
-            { symbol: "TAMBN", name: "TAMBN Token", address: "0x0000000000000000000000000000000000000000", decimals: 18, icon: "🏗️" },
-            { symbol: "JSFT", name: "JSFT Token", address: "0x0000000000000000000000000000000000000000", decimals: 18, icon: "📊" },
-            // Add more from Sidra official list (76 total) — replace placeholders with real contracts from ledger.sidrachain.com when needed
-        ];
+    connectBtn.onclick = async () => {
+      if (!window.ethereum) return alert("MetaMask not found");
+      provider = new ethers.BrowserProvider(window.ethereum);
+      await provider.send("wallet_addEthereumChain", [{
+        chainId: "0x17C5D", // 97453 in hex
+        chainName: "SidraChain",
+        nativeCurrency: { name: "SDA", symbol: "SDA", decimals: 18 },
+        rpcUrls: ["https://node.sidrachain.com"],
+        blockExplorerUrls: ["https://ledger.sidrachain.com"]
+      }]);
+      await window.ethereum.request({ method: "eth_requestAccounts" });
+      signer = await provider.getSigner();
+      address = await signer.getAddress();
+      connectBtn.textContent = address.slice(0,6) + "..." + address.slice(-4);
+      swapBtn.disabled = false;
+      status.textContent = "Connected ✓";
+    };
 
-        let fromToken = tokens[0]; // Native SDA by default
-        let toToken = tokens[1];
-        let currentSide = "from";
+    swapBtn.onclick = async () => {
+      const amountIn = document.getElementById('amountIn').value;
+      const tokenIn = document.getElementById('tokenIn').value;
+      const tokenOut = document.getElementById('tokenOut').value;
 
-        // ==================== WALLET CONNECT ====================
-        async function connectWallet() {
-            if (!window.ethereum) return alert("MetaMask not found");
-            provider = new ethers.BrowserProvider(window.ethereum);
-            const acc = await provider.send("eth_requestAccounts", []);
-            userAddress = acc[0];
-            signer = await provider.getSigner();
-            router = new ethers.Contract(ROUTER_ADDRESS, ROUTER_ABI, signer);
-            await switchNetwork();
-            document.getElementById("connect-btn").innerHTML = `✅ \( {userAddress.slice(0,6)}... \){userAddress.slice(-4)}`;
-            updateBalances();
-        }
+      if (!signer) return alert("Connect wallet first");
 
-        async function switchNetwork() { /* same as before */ }
+      status.textContent = "Swapping...";
+      const abi = [{
+        "inputs": [{"components": [
+          {"name":"tokenIn","type":"address"},
+          {"name":"tokenOut","type":"address"},
+          {"name":"fee","type":"uint24"},
+          {"name":"recipient","type":"address"},
+          {"name":"deadline","type":"uint256"},
+          {"name":"amountIn","type":"uint256"},
+          {"name":"amountOutMinimum","type":"uint256"},
+          {"name":"sqrtPriceLimitX96","type":"uint160"}
+        ],"name":"params","type":"tuple"}],
+        "name":"exactInputSingle",
+        "outputs":[{"name":"amountOut","type":"uint256"}],
+        "stateMutability":"payable",
+        "type":"function"
+      }];
 
-        // ==================== BALANCES (Native SDA support) ====================
-        async function updateBalances() {
-            if (!userAddress) return;
-            const fromBalEl = document.getElementById("from-balance");
-            let bal;
-            if (fromToken.address === "NATIVE") {
-                bal = await provider.getBalance(userAddress);
-            } else {
-                const erc = new ethers.Contract(fromToken.address, ERC20_ABI, provider);
-                bal = await erc.balanceOf(userAddress);
-            }
-            fromBalEl.textContent = `${parseFloat(ethers.formatUnits(bal, fromToken.decimals)).toFixed(4)} ${fromToken.symbol}`;
-
-            const toBalEl = document.getElementById("to-balance");
-            if (toToken.address === "NATIVE") {
-                bal = await provider.getBalance(userAddress);
-            } else {
-                const erc = new ethers.Contract(toToken.address, ERC20_ABI, provider);
-                bal = await erc.balanceOf(userAddress);
-            }
-            toBalEl.textContent = `${parseFloat(ethers.formatUnits(bal, toToken.decimals)).toFixed(4)} ${toToken.symbol}`;
-        }
-
-        // ==================== QUOTE (Native SDA support) ====================
-        async function updateOutput() {
-            const amtStr = document.getElementById("from-amount").value.trim();
-            if (!amtStr || !router) return;
-            document.getElementById("rate-loading").textContent = "fetching";
-            try {
-                const amountIn = ethers.parseUnits(amtStr, fromToken.decimals);
-                const pathFrom = fromToken.address === "NATIVE" ? WSDA : fromToken.address;
-                const pathTo = toToken.address === "NATIVE" ? WSDA : toToken.address;
-                const path = [pathFrom, pathTo];
-                const out = await router.getAmountsOut(amountIn, path);
-                const outFormatted = parseFloat(ethers.formatUnits(out[1], toToken.decimals));
-                animateValue("to-amount", 0, outFormatted, 420);
-                const rate = (outFormatted / parseFloat(amtStr)).toFixed(4);
-                document.getElementById("exchange-rate").innerHTML = `1 ${fromToken.symbol} ≈ ${rate} ${toToken.symbol}`;
-            } catch(e) {
-                document.getElementById("to-amount").value = "—";
-            }
-            document.getElementById("rate-loading").textContent = "";
-        }
-
-        // ==================== SWAP LOGIC (Native SDA in & out) ====================
-        async function executeSwap() {
-            if (!signer) return alert("Connect wallet first");
-            const amtStr = document.getElementById("from-amount").value;
-            if (!amtStr || parseFloat(amtStr) <= 0) return alert("Enter amount");
-
-            const amountIn = ethers.parseUnits(amtStr, fromToken.decimals);
-  
+      try {
+        const tx = await signer.sendTransaction({
+          to: ROUTER,
+          data: new ethers.Interface(abi).encodeFunctionData("exactInputSingle", [{
+            tokenIn,
+            tokenOut,
+            fee: 3000,
+            recipient: address,
+            deadline: Math.floor(Date.now()/1000) + 600,
+            amountIn: ethers.parseUnits(amountIn, 18),
+            amountOutMinimum: 0,
+            sqrtPriceLimitX96: 0
+          }]),
+          value: tokenIn === WSDA ? ethers.parseUnits(amountIn, 18) : 0
+        });
+        await tx.wait();
+        status.textContent = "✅ Swap successful!";
+      } catch (e) {
+        status.textContent = "Error: " + e.message;
+      }
+    };
+  </script>
+</body>
+</html>
+EOF
