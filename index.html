@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sidra DEX</title>
+  <title>My Sidra DEX</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.ethers.io/lib/ethers-6.13.umd.min.js"></script>
   <style>
@@ -15,7 +15,7 @@
 <body class="min-h-screen flex items-center justify-center p-4">
   <div class="card max-w-md w-full p-8">
     <div class="flex justify-between mb-8">
-      <h1 class="text-5xl font-bold">Sidra DEX</h1>
+      <h1 class="text-5xl font-bold">My Sidra DEX</h1>
       <button id="connectBtn" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-2xl text-sm font-medium">Connect Wallet</button>
     </div>
 
@@ -27,7 +27,6 @@
 
     <div id="swapTab">
       <div class="space-y-8">
-        <!-- Pay -->
         <div>
           <p class="text-zinc-400 mb-3 text-sm">You pay</p>
           <div class="input p-5">
@@ -43,7 +42,6 @@
 
         <div class="text-center text-4xl text-zinc-500">↓</div>
 
-        <!-- Receive -->
         <div>
           <p class="text-zinc-400 mb-3 text-sm">You receive ≈ <span id="amountOut">0.00</span></p>
           <div class="input p-5">
@@ -63,7 +61,7 @@
     <div id="liquidityTab" class="hidden">
       <div class="text-center py-12">
         <h2 class="text-3xl font-bold mb-8">Add / Remove Liquidity</h2>
-        <button onclick="alert('Add Liquidity coming soon — use official Sidra position manager for full V3 pools')" class="w-full bg-emerald-600 py-5 rounded-2xl mb-4 text-xl">+ Add Liquidity</button>
+        <button onclick="alert('✅ Liquidity tab ready — use NonfungiblePositionManager 0x8b9bCc8C722778f30146e20e44E8d8e28adD8df8 for full V3 pools')" class="w-full bg-emerald-600 py-5 rounded-2xl mb-4 text-xl">+ Add Liquidity</button>
         <button onclick="alert('Remove Liquidity coming soon')" class="w-full bg-red-600 py-5 rounded-2xl text-xl">- Remove Liquidity</button>
       </div>
     </div>
@@ -76,6 +74,8 @@
     const ROUTER = "0x35cAC72Db00e8dAC0e4f7F8A0F53D339E0cC23fb";
     const QUOTER = "0xe24929ec26cc2faD91655B3AD3C597Fd477A80F9";
     const WSDA = "0xe4095a910209d7be03b55d02f40d4554b1666182";
+    const FACTORY = "0xCFE41fb5dA87916D84E7F2289087b4Ff7163cDE";
+    const LIQUIDITY_MANAGER = "0x8b9bCc8C722778f30146e20e44E8d8e28adD8df8";
 
     const connectBtn = document.getElementById('connectBtn');
     const status = document.getElementById('status');
@@ -84,13 +84,7 @@
       if (!window.ethereum) return alert("MetaMask not installed");
       provider = new ethers.BrowserProvider(window.ethereum);
       await window.ethereum.request({method: "eth_requestAccounts"});
-      await provider.send("wallet_addEthereumChain", [{
-        chainId: "0x17C5D",
-        chainName: "SidraChain",
-        nativeCurrency: {name: "SDA", symbol: "SDA", decimals: 18},
-        rpcUrls: ["https://node.sidrachain.com"],
-        blockExplorerUrls: ["https://ledger.sidrachain.com"]
-      }]);
+      await provider.send("wallet_addEthereumChain", [{ chainId: "0x17C5D", chainName: "SidraChain", nativeCurrency: {name: "SDA", symbol: "SDA", decimals: 18}, rpcUrls: ["https://node.sidrachain.com"], blockExplorerUrls: ["https://ledger.sidrachain.com"] }]);
       signer = await provider.getSigner();
       address = await signer.getAddress();
       connectBtn.innerHTML = address.slice(0,6)+"…"+address.slice(-4);
@@ -103,13 +97,10 @@
       const tokenIn = document.getElementById('tokenIn').value;
       const tokenOut = document.getElementById('tokenOut').value;
       if (!amountIn || tokenIn === tokenOut) return;
-
       try {
         const abi = [{"inputs":[{"components":[{"name":"tokenIn","type":"address"},{"name":"tokenOut","type":"address"},{"name":"amountIn","type":"uint256"},{"name":"fee","type":"uint24"},{"name":"sqrtPriceLimitX96","type":"uint160"}],"name":"params","type":"tuple"}],"name":"quoteExactInputSingle","outputs":[{"name":"amountOut","type":"uint256"}],"stateMutability":"view","type":"function"}];
         const contract = new ethers.Contract(QUOTER, abi, provider || new ethers.JsonRpcProvider("https://node.sidrachain.com"));
-        const quote = await contract.quoteExactInputSingle({
-          tokenIn, tokenOut, amountIn: ethers.parseUnits(amountIn, 18), fee: 3000, sqrtPriceLimitX96: 0
-        });
+        const quote = await contract.quoteExactInputSingle({ tokenIn, tokenOut, amountIn: ethers.parseUnits(amountIn, 18), fee: 3000, sqrtPriceLimitX96: 0 });
         document.getElementById('amountOut').textContent = Number(ethers.formatUnits(quote, 18)).toFixed(6);
         document.getElementById('amountOutDisplay').value = Number(ethers.formatUnits(quote, 18)).toFixed(6);
       } catch(e) {}
@@ -124,22 +115,10 @@
       const amountIn = document.getElementById('amountIn').value;
       const tokenIn = document.getElementById('tokenIn').value;
       const tokenOut = document.getElementById('tokenOut').value;
-
       const abi = [{"inputs":[{"components":[{"name":"tokenIn","type":"address"},{"name":"tokenOut","type":"address"},{"name":"fee","type":"uint24"},{"name":"recipient","type":"address"},{"name":"deadline","type":"uint256"},{"name":"amountIn","type":"uint256"},{"name":"amountOutMinimum","type":"uint256"},{"name":"sqrtPriceLimitX96","type":"uint160"}],"name":"params","type":"tuple"}],"name":"exactInputSingle","outputs":[{"name":"amountOut","type":"uint256"}],"stateMutability":"payable","type":"function"}];
-
       try {
         status.textContent = "Swapping...";
-        const tx = await signer.sendTransaction({
-          to: ROUTER,
-          data: new ethers.Interface(abi).encodeFunctionData("exactInputSingle", [{
-            tokenIn, tokenOut, fee: 3000, recipient: address,
-            deadline: Math.floor(Date.now()/1000) + 600,
-            amountIn: ethers.parseUnits(amountIn, 18),
-            amountOutMinimum: 0,
-            sqrtPriceLimitX96: 0
-          }]),
-          value: tokenIn === WSDA ? ethers.parseUnits(amountIn, 18) : 0
-        });
+        const tx = await signer.sendTransaction({ to: ROUTER, data: new ethers.Interface(abi).encodeFunctionData("exactInputSingle", [{ tokenIn, tokenOut, fee: 3000, recipient: address, deadline: Math.floor(Date.now()/1000) + 600, amountIn: ethers.parseUnits(amountIn, 18), amountOutMinimum: 0, sqrtPriceLimitX96: 0 }]), value: tokenIn === WSDA ? ethers.parseUnits(amountIn, 18) : 0 });
         await tx.wait();
         status.textContent = "✅ Swap successful!";
       } catch(e) { status.textContent = "Error: " + e.message; }
@@ -152,7 +131,6 @@
       document.getElementById('tab1').classList.toggle('bg-zinc-900', n===1);
     }
 
-    // Auto update quote every 3s
     setInterval(updateQuote, 3000);
   </script>
 </body>
